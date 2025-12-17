@@ -4,6 +4,7 @@
 /backend/.DS_Store
 /backend/.env
 /backend/.env.backup
+/backend/.env.example
 /backend/.env.production
 /backend/.phpactor.json
 /backend/.phpunit.result.cache
