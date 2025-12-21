@@ -1,35 +1,69 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import type { ReactNode } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@/contexts/AuthProvider';
+import { useAuth } from '@/hooks/useAuth';
+import Layout from '@/components/Layout';
 
-function App() {
-  const [count, setCount] = useState(0)
+// Páginas
+import Login from '@/pages/Login';
+import Dashboard from '@/pages/Dashboard';
+import AtendimentosList from '@/pages/AtendimentosList';
+import AtendimentoForm from '@/pages/AtendimentoForm';
+import AtendimentoDetail from '@/pages/AtendimentoDetail';
+import Listas from '@/pages/Listas';
+import DashboardMaster from '@/pages/DashboardMaster';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
+const queryClient = new QueryClient();
+
+// Rotas que exigem apenas usuário logado
+function PrivateRoute({ children }: { children: ReactNode }) {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <ProtectedRoute>
+      <Layout>{children}</Layout>
+    </ProtectedRoute>
+  );
 }
 
-export default App
+// Rotas exclusivas para MASTER
+function MasterRoute({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  if (user?.role !== 'master') {
+    return <Navigate to="/" replace />;
+  }
+  return (
+    <ProtectedRoute>
+      <Layout>{children}</Layout>
+    </ProtectedRoute>
+  );
+}
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Rotas públicas */}
+            <Route path="/login" element={<Login />} />
+
+            {/* Rotas do atendente */}
+            <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+            <Route path="/atendimentos" element={<PrivateRoute><AtendimentosList /></PrivateRoute>} />
+            <Route path="/novo-atendimento" element={<PrivateRoute><AtendimentoForm /></PrivateRoute>} />
+            <Route path="/atendimentos/:id" element={<PrivateRoute><AtendimentoDetail /></PrivateRoute>} />
+            <Route path="/atendimentos/:id/editar" element={<PrivateRoute><AtendimentoForm /></PrivateRoute>} />
+
+            {/* Rotas do master */}
+            <Route path="/listas" element={<MasterRoute><Listas /></MasterRoute>} />
+            <Route path="/dashboard-master" element={<MasterRoute><DashboardMaster /></MasterRoute>} />
+
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
