@@ -44,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Atendimentos (cada usuário vê apenas os seus)
     Route::apiResource('atendimentos', AtendimentoController::class);
+    Route::get('/atendimentos/stats', [AtendimentoController::class, 'stats']);
 
     // Dashboard (apenas Master)
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);

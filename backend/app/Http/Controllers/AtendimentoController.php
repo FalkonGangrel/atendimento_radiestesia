@@ -114,4 +114,20 @@ class AtendimentoController extends Controller
 
         return response()->json(['message' => 'Atendimento deletado com sucesso']);
     }
+
+    public function stats(Request $request)
+    {
+        $user = $request->user();
+
+        // Atendimentos do usuário logado
+        $query = Atendimento::where('user_id', $user->id);
+
+        return response()->json([
+            'total' => $query->count(),
+            'em_andamento' => $query->where('status', 'em_andamento')->count(),
+            'concluidos' => $query->where('status', 'concluido')->count(),
+            'cancelados' => $query->where('status', 'cancelado')->count(),
+        ]);
+    }
+
 }
