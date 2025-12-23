@@ -43,8 +43,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/list-items/{id}', [ListItemController::class, 'destroy']);
 
     // Atendimentos (cada usuário vê apenas os seus)
-    Route::apiResource('atendimentos', AtendimentoController::class);
     Route::get('/atendimentos/stats', [AtendimentoController::class, 'stats']);
+    Route::apiResource('atendimentos', AtendimentoController::class);
 
     // Dashboard (apenas Master)
     Route::get('/dashboard/stats', [DashboardController::class, 'stats']);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\AtendimentoService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AtendimentoController extends Controller
 {
@@ -11,7 +12,6 @@ class AtendimentoController extends Controller
     {
         $userId = auth()->id();
         $atendimentos = AtendimentoService::getAll($userId);
-
         return response()->json($atendimentos);
     }
 
@@ -36,9 +36,11 @@ class AtendimentoController extends Controller
         ]);
 
         $userId = auth()->id();
-
         $items = $validated['items'] ?? [];
         unset($validated['items']);
+
+        // Adicionar status padrão se não fornecido
+        $validated['status'] = $validated['status'] ?? 'em_andamento';
 
         $id = AtendimentoService::create($userId, $validated);
 
@@ -86,7 +88,6 @@ class AtendimentoController extends Controller
         ]);
 
         $userId = auth()->id();
-
         $items = $validated['items'] ?? null;
         unset($validated['items']);
 
@@ -117,17 +118,23 @@ class AtendimentoController extends Controller
 
     public function stats(Request $request)
     {
-        $user = $request->user();
+        $userId = auth()->id();
+        $tableName = AtendimentoService::getTableName($userId);
 
-        // Atendimentos do usuário logado
-        $query = Atendimento::where('user_id', $user->id);
+        // Garantir que a tabela existe
+        AtendimentoService::ensureTableExists($userId);
+
+        // Contar diretamente na tabela dinâmica
+        $total = DB::table($tableName)->count();
+        $emAndamento = DB::table($tableName)->where('status', 'em_andamento')->count();
+        $concluidos = DB::table($tableName)->where('status', 'concluido')->count();
+        $cancelados = DB::table($tableName)->where('status', 'cancelado')->count();
 
         return response()->json([
-            'total' => $query->count(),
-            'em_andamento' => $query->where('status', 'em_andamento')->count(),
-            'concluidos' => $query->where('status', 'concluido')->count(),
-            'cancelados' => $query->where('status', 'cancelado')->count(),
+            'total' => $total,
+            'em_andamento' => $emAndamento,
+            'concluidos' => $concluidos,
+            'cancelados' => $cancelados,
         ]);
     }
-
 }
