@@ -4,7 +4,7 @@ import { api } from '@/lib/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, BarChart3, FileText, List } from 'lucide-react';
 import { AxiosError } from 'axios';
 
 interface DashboardStats {
@@ -47,6 +47,7 @@ export default function Dashboard() {
             </Button>
         </div>
 
+        {/* Estatísticas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card>
             <CardHeader>
@@ -85,26 +86,39 @@ export default function Dashboard() {
             </Card>
         </div>
 
+        {/* Ações Rápidas */}
         <Card>
             <CardHeader>
             <CardTitle>Ações Rápidas</CardTitle>
             </CardHeader>
-            <CardContent className="flex gap-4">
+            <CardContent className="flex flex-wrap gap-4">
             <Button onClick={() => navigate('/novo-atendimento')}>
+                <Plus className="w-4 h-4 mr-2" />
                 Novo Atendimento
             </Button>
+
             <Button variant="outline" onClick={() => navigate('/atendimentos')}>
+                <FileText className="w-4 h-4 mr-2" />
                 Ver Todos os Atendimentos
             </Button>
+
+            {/* Botão Dashboard Master - APENAS para MASTER */}
             {user?.role === 'master' && (
-                <>
+                <Button 
+                variant="outline" 
+                onClick={() => navigate('/dashboard-master')}
+                className="bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100"
+                >
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Dashboard Master
+                </Button>
+            )}
+
+            {user?.role === 'master' && (
                 <Button variant="outline" onClick={() => navigate('/listas')}>
-                    Gerenciar Listas
+                <List className="w-4 h-4 mr-2" />
+                Gerenciar Listas
                 </Button>
-                <Button variant="outline" onClick={() => navigate('/dashboard-master')}>
-                    Dashboard Master
-                </Button>
-                </>
             )}
             </CardContent>
         </Card>

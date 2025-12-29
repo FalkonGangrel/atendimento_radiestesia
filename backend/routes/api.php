@@ -6,6 +6,7 @@ use App\Http\Controllers\AtendimentoController;
 use App\Http\Controllers\ListController;
 use App\Http\Controllers\ListItemController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MasterController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -42,8 +43,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/list-items/{id}', [ListItemController::class, 'update']);
     Route::delete('/list-items/{id}', [ListItemController::class, 'destroy']);
 
-    // Atendimentos (cada usuário vê apenas os seus)
+    // Rotas Master (protegidas pelo middleware 'master')
+    Route::middleware('master')->group(function () {
+        Route::get('/master/stats', [MasterController::class, 'stats']);
+        // Listas (master)
+        Route::apiResource('lists', ListController::class);
+        Route::apiResource('list-items', ListItemController::class);
+    });
+    
+    // Estatísticas do atendente
     Route::get('/atendimentos/stats', [AtendimentoController::class, 'stats']);
+
+    // CRUD de atendimentos
     Route::apiResource('atendimentos', AtendimentoController::class);
 
     // Dashboard (apenas Master)

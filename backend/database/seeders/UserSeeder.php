@@ -19,14 +19,21 @@ class UserSeeder extends Seeder
 
         User::create([
             'name' => 'Master Admin',
-            'email' => 'master@innerai.com',
+            'email' => 'master@radiestesia.com',
             'password' => $defaultPassword,
             'role' => 'master',
         ]);
 
         User::create([
-            'name' => 'Atendente Teste',
-            'email' => 'atendente@innerai.com',
+            'name' => 'Atendente Teste 1',
+            'email' => 'atendente1@radiestesia.com',
+            'password' => $defaultPassword,
+            'role' => 'atendente',
+        ]);
+
+        User::create([
+            'name' => 'Atendente Teste 2',
+            'email' => 'atendente2@radiestesia.com',
             'password' => $defaultPassword,
             'role' => 'atendente',
         ]);
