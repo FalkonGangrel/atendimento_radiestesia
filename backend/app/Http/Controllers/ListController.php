@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\ListModel;
-use App\Models\ListItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
@@ -12,17 +11,16 @@ class ListController extends Controller
 {
     public function index()
     {
-        $lists = ListModel::with('items')->where('active', true)->get();
-        return response()->json($lists);
+        $this->authorize('viewAny', ListModel::class);
+
+        return response()->json(
+            ListModel::with('items')->where('active', true)->get()
+        );
     }
 
     public function store(Request $request)
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $this->authorize('create', ListModel::class);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -31,7 +29,7 @@ class ListController extends Controller
         $list = ListModel::create([
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
-            'created_by' => auth()->id(),
+            'created_by' => Auth::id(),
         ]);
 
         return response()->json($list, 201);
@@ -39,13 +37,10 @@ class ListController extends Controller
 
     public function update(Request $request, $id)
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
 
         $list = ListModel::findOrFail($id);
+        
+        $this->authorize('update', $list);
 
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
@@ -63,13 +58,11 @@ class ListController extends Controller
 
     public function destroy($id)
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
 
         $list = ListModel::findOrFail($id);
+
+        $this->authorize('delete', $list);
+
         $list->delete();
 
         return response()->json(['message' => 'Lista deletada com sucesso']);

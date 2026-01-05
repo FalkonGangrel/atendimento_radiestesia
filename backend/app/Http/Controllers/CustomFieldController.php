@@ -5,17 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\CustomField;
 use App\Services\CustomFieldService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class CustomFieldController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $this->authorize('viewAny', CustomField::class);
 
         $fields = CustomField::with('section')
             ->orderBy('order')
@@ -24,26 +19,9 @@ class CustomFieldController extends Controller
         return response()->json($fields);
     }
 
-    public function getForCurrentUser()
-    {
-        $userId = Auth::id();
-
-        if (!$userId) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        $fields = CustomFieldService::getPermittedFieldsGroupedBySection($userId);
-
-        return response()->json($fields);
-    }
-
     public function store(Request $request)
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $this->authorize('create', CustomField::class);
 
         $validated = $request->validate([
             'section_id' => 'required|exists:field_sections,id',
@@ -63,13 +41,9 @@ class CustomFieldController extends Controller
 
     public function update(Request $request, $id)
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
         $field = CustomField::findOrFail($id);
+
+        $this->authorize('update', $field);
 
         $validated = $request->validate([
             'section_id' => 'sometimes|required|exists:field_sections,id',
@@ -89,11 +63,9 @@ class CustomFieldController extends Controller
 
     public function destroy($id)
     {
-        $user = Auth::user();
+        $field = CustomField::findOrFail($id);
 
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $this->authorize('delete', $field);
 
         CustomFieldService::deleteField($id);
 

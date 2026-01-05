@@ -5,17 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\FieldSection;
 use App\Services\CustomFieldService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class FieldSectionController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $this->authorize('viewAny', FieldSection::class);
 
         $sections = FieldSection::with(['fields' => function ($query) {
             $query->orderBy('order');
@@ -26,11 +21,7 @@ class FieldSectionController extends Controller
 
     public function store(Request $request)
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $this->authorize('create', FieldSection::class);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -46,13 +37,9 @@ class FieldSectionController extends Controller
 
     public function update(Request $request, $id)
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
         $section = FieldSection::findOrFail($id);
+
+        $this->authorize('update', $section);
 
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
@@ -68,11 +55,9 @@ class FieldSectionController extends Controller
 
     public function destroy($id)
     {
-        $user = Auth::user();
+        $section = FieldSection::findOrFail($id);
 
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $this->authorize('delete', $section);
 
         CustomFieldService::deleteSection($id);
 

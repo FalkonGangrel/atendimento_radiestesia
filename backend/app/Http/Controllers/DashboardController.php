@@ -4,17 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class DashboardController extends Controller
 {
     public function stats()
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        Gate::authorize('view-dashboard');
 
         $atendentes = User::where('role', 'atendente')->get();
 

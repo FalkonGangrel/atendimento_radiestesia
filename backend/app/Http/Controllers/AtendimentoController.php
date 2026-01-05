@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use App\Services\AtendimentoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class AtendimentoController extends Controller
 {
     public function index()
     {
-        $userId = auth()->id();
+        $userId = Auth::id();
         $atendimentos = AtendimentoService::getAll($userId);
         return response()->json($atendimentos);
     }
@@ -34,8 +35,8 @@ class AtendimentoController extends Controller
             'items.*.list_item_id' => 'required|exists:list_items,id',
             'items.*.quantity' => 'nullable|integer|min:0',
         ]);
-
-        $userId = auth()->id();
+        
+        $userId = Auth::id();
         $items = $validated['items'] ?? [];
         unset($validated['items']);
 
@@ -53,7 +54,7 @@ class AtendimentoController extends Controller
 
     public function show($id)
     {
-        $userId = auth()->id();
+        $userId = Auth::id();
         $atendimento = AtendimentoService::find($userId, $id);
 
         if (!$atendimento) {
@@ -87,7 +88,7 @@ class AtendimentoController extends Controller
             'items.*.quantity' => 'nullable|integer|min:0',
         ]);
 
-        $userId = auth()->id();
+        $userId = Auth::id();
         $items = $validated['items'] ?? null;
         unset($validated['items']);
 
@@ -106,7 +107,7 @@ class AtendimentoController extends Controller
 
     public function destroy($id)
     {
-        $userId = auth()->id();
+        $userId = Auth::id();
         $success = AtendimentoService::delete($userId, $id);
 
         if (!$success) {
@@ -118,7 +119,7 @@ class AtendimentoController extends Controller
 
     public function stats(Request $request)
     {
-        $userId = auth()->id();
+        $userId = Auth::id();
         $tableName = AtendimentoService::getTableName($userId);
 
         // Garantir que a tabela existe

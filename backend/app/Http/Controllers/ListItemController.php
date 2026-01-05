@@ -4,17 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\ListItem;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class ListItemController extends Controller
 {
     public function store(Request $request)
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $this->authorize('create', ListItem::class);
 
         $validated = $request->validate([
             'list_id' => 'required|exists:lists,id',
@@ -30,13 +25,10 @@ class ListItemController extends Controller
 
     public function update(Request $request, $id)
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
 
         $item = ListItem::findOrFail($id);
+
+        $this->authorize('update', $item);
 
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
@@ -52,13 +44,11 @@ class ListItemController extends Controller
 
     public function destroy($id)
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
 
         $item = ListItem::findOrFail($id);
+
+        $this->authorize('delete', $item);
+
         $item->delete();
 
         return response()->json(['message' => 'Item deletado com sucesso']);

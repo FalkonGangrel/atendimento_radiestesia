@@ -5,34 +5,27 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Services\CustomFieldService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class UserFieldPermissionController extends Controller
 {
     public function getUserPermissions($userId)
     {
-        $user = Auth::user();
+        $target = User::findOrFail($userId);
+        Gate::authorize('manage-user-field-permissions', $target);
 
-        if (!$user || (!$user->isMaster() && $user->id !== (int)$userId)) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $permissions = CustomFieldService::getUserPermissions($userId);
-
-        return response()->json($permissions);
+        return response()->json(
+            CustomFieldService::getUserPermissions($userId)
+        );
     }
 
     public function syncUserPermissions(Request $request, $userId)
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
 
         $targetUser = User::findOrFail($userId);
+        Gate::authorize('manage-user-field-permissions', $targetUser);
 
-        if ($targetUser->isMaster() && $user->id !== (int)$userId) {
+        if ($targetUser->isMaster() && $targetUser->id !== (int)$userId) {
             return response()->json(['message' => 'Não pode alterar permissões de outro master'], 403);
         }
 
@@ -51,11 +44,7 @@ class UserFieldPermissionController extends Controller
 
     public function grantPermission(Request $request, $userId)
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        Gate::authorize('manage-user-field-permissions', User::findOrFail($userId));
 
         $validated = $request->validate([
             'field_id' => 'required|exists:custom_fields,id',
@@ -68,11 +57,7 @@ class UserFieldPermissionController extends Controller
 
     public function revokePermission($userId, $fieldId)
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        Gate::authorize('manage-user-field-permissions', User::findOrFail($userId));
 
         CustomFieldService::revokePermission($userId, $fieldId);
 

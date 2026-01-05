@@ -4,17 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
-
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $this->authorize('viewAny', User::class);
 
         $users = User::select('id', 'name', 'email', 'role', 'created_at')
             ->orderBy('created_at', 'desc')
@@ -25,29 +20,23 @@ class UserController extends Controller
 
     public function show($id)
     {
-        $user = Auth::user();
         $targetUser = User::findOrFail($id);
 
-        if (!$user || (!$user->isMaster() && $user->id !== (int)$id)) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $this->authorize('view', $targetUser);
 
         return response()->json($targetUser->only('id', 'name', 'email', 'role', 'created_at'));
     }
 
     public function update(Request $request, $id)
     {
-        $user = Auth::user();
         $targetUser = User::findOrFail($id);
 
-        if (!$user || (!$user->isMaster() && $user->id !== (int)$id)) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
+        $this->authorize('update', $targetUser);
 
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'email' => 'sometimes|required|email|unique:users,email,' . $id,
-            'role' => $user->isMaster() ? 'sometimes|in:master,atendente' : 'prohibited',
+            'role' => $targetUser->isMaster() ? 'sometimes|in:master,atendente' : 'prohibited',
         ]);
 
         $targetUser->update($validated);
@@ -57,13 +46,10 @@ class UserController extends Controller
 
     public function destroy($id)
     {
-        $user = Auth::user();
+        $target = User::findOrFail($id);
+        $this->authorize('delete', $target);
 
-        if (!$user || !$user->isMaster()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        if ($user->id === (int)$id) {
+        if ($target->id === (int)$id) {
             return response()->json(['message' => 'Você não pode deletar a si mesmo'], 403);
         }
 
