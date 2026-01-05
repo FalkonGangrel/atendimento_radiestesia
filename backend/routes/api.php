@@ -1,5 +1,4 @@
 <?php
-// routes/api.php
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AtendimentoController;
@@ -7,6 +6,10 @@ use App\Http\Controllers\ListController;
 use App\Http\Controllers\ListItemController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MasterController;
+use App\Http\Controllers\FieldSectionController;
+use App\Http\Controllers\CustomFieldController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserFieldPermissionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -26,37 +29,73 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
 
-    // Autenticação
+    // ====================================================================
+    // AUTENTICAÇÃO
+    // ====================================================================
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/logout-all', [AuthController::class, 'logoutAll']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::put('/profile', [AuthController::class, 'updateProfile']);
 
-    // Listas (todos podem visualizar, apenas Master pode criar/editar)
+    // ====================================================================
+    // CAMPOS CUSTOMIZADOS - Todos podem ver seus campos permitidos
+    // ====================================================================
+    Route::get('/custom-fields/my-fields', [CustomFieldController::class, 'getForCurrentUser']);
+
+    // ====================================================================
+    // LISTAS (todos podem visualizar, apenas Master pode criar/editar)
+    // ====================================================================
     Route::get('/lists', [ListController::class, 'index']);
     Route::post('/lists', [ListController::class, 'store']);
     Route::put('/lists/{id}', [ListController::class, 'update']);
     Route::delete('/lists/{id}', [ListController::class, 'destroy']);
 
-    // Itens de Listas (apenas Master pode criar/editar)
+    // ====================================================================
+    // ITENS DE LISTAS (apenas Master pode criar/editar)
+    // ====================================================================
     Route::post('/list-items', [ListItemController::class, 'store']);
     Route::put('/list-items/{id}', [ListItemController::class, 'update']);
     Route::delete('/list-items/{id}', [ListItemController::class, 'destroy']);
 
-    // Rotas Master (protegidas pelo middleware 'master')
-    Route::middleware('master')->group(function () {
-        Route::get('/master/stats', [MasterController::class, 'stats']);
-        // Listas (master)
-        Route::apiResource('lists', ListController::class);
-        Route::apiResource('list-items', ListItemController::class);
-    });
-    
-    // Estatísticas do atendente
+    // ====================================================================
+    // ATENDIMENTOS (todos os usuários autenticados)
+    // ====================================================================
     Route::get('/atendimentos/stats', [AtendimentoController::class, 'stats']);
-
-    // CRUD de atendimentos
     Route::apiResource('atendimentos', AtendimentoController::class);
 
-    // Dashboard (apenas Master)
-    Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+    // ====================================================================
+    // ROTAS MASTER (protegidas pelo middleware 'master')
+    // ====================================================================
+    Route::middleware('master')->group(function () {
+
+        // Dashboard Master
+        Route::get('/master/stats', [MasterController::class, 'stats']);
+        Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+
+        // Gerenciamento de Seções de Campos
+        Route::get('/field-sections', [FieldSectionController::class, 'index']);
+        Route::post('/field-sections', [FieldSectionController::class, 'store']);
+        Route::put('/field-sections/{id}', [FieldSectionController::class, 'update']);
+        Route::delete('/field-sections/{id}', [FieldSectionController::class, 'destroy']);
+
+        // Gerenciamento de Campos Customizados
+        Route::get('/custom-fields', [CustomFieldController::class, 'index']);
+        Route::post('/custom-fields', [CustomFieldController::class, 'store']);
+        Route::put('/custom-fields/{id}', [CustomFieldController::class, 'update']);
+        Route::delete('/custom-fields/{id}', [CustomFieldController::class, 'destroy']);
+
+        // Gerenciamento de Usuários
+        Route::get('/users', [UserController::class, 'index']);
+        Route::get('/users/{id}', [UserController::class, 'show']);
+        Route::put('/users/{id}', [UserController::class, 'update']);
+        Route::delete('/users/{id}', [UserController::class, 'destroy']);
+
+        // Gerenciamento de Permissões de Campos por Usuário
+        Route::get('/users/{userId}/permissions', [UserFieldPermissionController::class, 'getUserPermissions']);
+        Route::post('/users/{userId}/permissions/sync', [UserFieldPermissionController::class, 'syncUserPermissions']);
+        Route::post('/users/{userId}/permissions/grant', [UserFieldPermissionController::class, 'grantPermission']);
+        Route::delete('/users/{userId}/permissions/{fieldId}', [UserFieldPermissionController::class, 'revokePermission']);
+
+    });
+
 });

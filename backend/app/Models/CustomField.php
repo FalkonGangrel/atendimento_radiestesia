@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CustomField extends Model
 {
+    protected $table = 'custom_fields';
+
     protected $fillable = [
         'section_id',
         'name',

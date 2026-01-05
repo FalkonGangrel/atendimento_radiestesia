@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FieldSection extends Model
 {
+    protected $table = 'field_sections';
+
     protected $fillable = [
         'name',
         'slug',

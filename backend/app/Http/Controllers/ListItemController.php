@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\ListItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ListItemController extends Controller
 {
     public function store(Request $request)
     {
-        if (!auth()->user()->isMaster()) {
+        $user = Auth::user();
+
+        if (!$user || !$user->isMaster()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -27,7 +30,9 @@ class ListItemController extends Controller
 
     public function update(Request $request, $id)
     {
-        if (!auth()->user()->isMaster()) {
+        $user = Auth::user();
+
+        if (!$user || !$user->isMaster()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -47,7 +52,9 @@ class ListItemController extends Controller
 
     public function destroy($id)
     {
-        if (!auth()->user()->isMaster()) {
+        $user = Auth::user();
+
+        if (!$user || !$user->isMaster()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 

@@ -13,6 +13,9 @@ import AtendimentoForm from '@/pages/AtendimentoForm';
 import AtendimentoDetail from '@/pages/AtendimentoDetail';
 import Listas from '@/pages/Listas';
 import DashboardMaster from '@/pages/DashboardMaster';
+import { Usuarios } from '@/pages/Usuarios';
+import { CamposConfiguraveis } from '@/pages/CamposConfiguraveis';
+import { PermissoesUsuario } from '@/pages/PermissoesUsuario';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 const queryClient = new QueryClient();
@@ -58,6 +61,9 @@ export default function App() {
             {/* Rotas do master */}
             <Route path="/listas" element={<MasterRoute><Listas /></MasterRoute>} />
             <Route path="/dashboard-master" element={<MasterRoute><DashboardMaster /></MasterRoute>} />
+            <Route path="/master/usuarios" element={<MasterRoute><Usuarios /></MasterRoute>} />
+            <Route path="/master/campos" element={<MasterRoute><CamposConfiguraveis /></MasterRoute>} />
+            <Route path="/master/permissoes/:userId" element={<MasterRoute><PermissoesUsuario /></MasterRoute>} />
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" />} />

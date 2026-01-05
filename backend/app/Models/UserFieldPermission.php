@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserFieldPermission extends Model
 {
+    protected $table = 'user_field_permissions';
+
     protected $fillable = [
         'user_id',
         'custom_field_id',

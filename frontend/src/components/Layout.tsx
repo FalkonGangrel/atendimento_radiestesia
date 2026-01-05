@@ -1,131 +1,127 @@
-import type { ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import {
-    LayoutDashboard,
-    FileText,
-    List,
-    LogOut,
-    Menu,
-    X
-} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { LogOut, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
 interface LayoutProps {
-    children: ReactNode;
+    children: React.ReactNode;
 }
 
 export default function Layout({ children }: LayoutProps) {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
-    const location = useLocation();
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
 
     const handleLogout = async () => {
         await logout();
         navigate('/login');
     };
 
-    const menuItems = [
-        {
-        icon: LayoutDashboard,
-        label: 'Dashboard',
-        path: '/', // ← SEMPRE aponta para Dashboard.tsx
-        },
-        {
-        icon: FileText,
-        label: 'Atendimentos',
-        path: '/atendimentos',
-        },
-        // Menu "Listas" só aparece para MASTER
-        ...(user?.role === 'master' ? [{
-        icon: List,
-        label: 'Listas',
-        path: '/listas',
-        }] : []),
-    ];
-
-    const isActive = (path: string) => location.pathname === path;
-
     return (
-        <div className="min-h-screen bg-gray-50">
-        {/* Header Mobile */}
-        <div className="lg:hidden bg-white border-b px-4 py-3 flex justify-between items-center">
-            <h1 className="text-xl font-bold text-blue-600">Radionics</h1>
-            <button onClick={() => setSidebarOpen(!sidebarOpen)}>
-            {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-        </div>
-
+        <div className="flex h-screen bg-gray-100">
         {/* Sidebar */}
-        <aside
-            className={`fixed top-0 left-0 z-40 w-64 h-screen bg-white border-r transition-transform ${
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-            } lg:translate-x-0`}
+        <div
+            className={`${
+            sidebarOpen ? 'w-64' : 'w-20'
+            } bg-gray-900 text-white transition-all duration-300 flex flex-col`}
         >
-            <div className="h-full flex flex-col">
-            {/* Logo */}
-            <div className="p-6 border-b">
-                <h1 className="text-2xl font-bold text-blue-600">Radionics</h1>
-                <p className="text-sm text-gray-600 mt-1">{user?.name}</p>
-                {user?.role === 'master' && (
-                <span className="inline-block mt-2 px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded">
-                    MASTER
-                </span>
-                )}
+            {/* Header do Sidebar */}
+            <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+            <h1 className={`font-bold ${sidebarOpen ? 'text-xl' : 'text-xs'}`}>
+                {sidebarOpen ? 'Radionics' : 'R'}
+            </h1>
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1">
+                {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
             </div>
 
-            {/* Menu */}
+            {/* Menu Items */}
             <nav className="flex-1 p-4 space-y-2">
-                {menuItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                    <button
-                    key={item.path}
-                    onClick={() => {
-                        navigate(item.path);
-                        setSidebarOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                        isActive(item.path)
-                        ? 'bg-blue-50 text-blue-600 font-semibold'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                    >
-                    <Icon className="w-5 h-5" />
-                    {item.label}
-                    </button>
-                );
-                })}
+            {/* Dashboard */}
+            <button
+                onClick={() => navigate('/')}
+                className="w-full text-left px-4 py-2 rounded hover:bg-gray-800 transition"
+            >
+                {sidebarOpen ? 'Dashboard' : '📊'}
+            </button>
+
+            {/* Atendimentos */}
+            <button
+                onClick={() => navigate('/atendimentos')}
+                className="w-full text-left px-4 py-2 rounded hover:bg-gray-800 transition"
+            >
+                {sidebarOpen ? 'Meus Atendimentos' : '📋'}
+            </button>
+
+            {/* Novo Atendimento */}
+            <button
+                onClick={() => navigate('/novo-atendimento')}
+                className="w-full text-left px-4 py-2 rounded hover:bg-gray-800 transition"
+            >
+                {sidebarOpen ? 'Novo Atendimento' : '➕'}
+            </button>
+
+            {/* Divisor */}
+            {user?.role === 'master' && <div className="border-t border-gray-700 my-4"></div>}
+
+            {/* Menu Master */}
+            {user?.role === 'master' && (
+                <>
+                <p className="px-4 py-2 text-xs font-bold text-gray-400 uppercase">
+                    {sidebarOpen ? 'Administração' : 'ADM'}
+                </p>
+
+                <button
+                    onClick={() => navigate('/master/usuarios')}
+                    className="w-full text-left px-4 py-2 rounded hover:bg-gray-800 transition"
+                >
+                    {sidebarOpen ? '👥 Usuários' : '👥'}
+                </button>
+
+                <button
+                    onClick={() => navigate('/master/campos')}
+                    className="w-full text-left px-4 py-2 rounded hover:bg-gray-800 transition"
+                >
+                    {sidebarOpen ? '⚙️ Campos Configuráveis' : '⚙️'}
+                </button>
+
+                <button
+                    onClick={() => navigate('/listas')}
+                    className="w-full text-left px-4 py-2 rounded hover:bg-gray-800 transition"
+                >
+                    {sidebarOpen ? '📝 Listas' : '📝'}
+                </button>
+
+                <button
+                    onClick={() => navigate('/dashboard-master')}
+                    className="w-full text-left px-4 py-2 rounded hover:bg-gray-800 transition"
+                >
+                    {sidebarOpen ? '📈 Dashboard Master' : '📈'}
+                </button>
+                </>
+            )}
             </nav>
 
-            {/* Logout */}
-            <div className="p-4 border-t">
-                <Button
-                variant="outline"
-                className="w-full"
+            {/* Footer do Sidebar */}
+            <div className="p-4 border-t border-gray-700">
+            <div className={`mb-4 ${sidebarOpen ? 'text-sm' : 'text-xs'}`}>
+                <p className="font-semibold truncate">{user?.name}</p>
+                <p className="text-gray-400 text-xs truncate">{user?.email}</p>
+            </div>
+            <button
                 onClick={handleLogout}
-                >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sair
-                </Button>
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 rounded hover:bg-red-700 transition"
+            >
+                <LogOut size={18} />
+                {sidebarOpen && 'Sair'}
+            </button>
             </div>
-            </div>
-        </aside>
-
-        {/* Overlay Mobile */}
-        {sidebarOpen && (
-            <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-            />
-        )}
+        </div>
 
         {/* Main Content */}
-        <main className="lg:ml-64 p-6">
-            <div className="max-w-7xl mx-auto">{children}</div>
-        </main>
+        <div className="flex-1 overflow-auto">
+            <div className="p-8">{children}</div>
+        </div>
         </div>
     );
 }

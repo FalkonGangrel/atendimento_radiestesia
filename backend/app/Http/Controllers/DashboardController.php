@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
     public function stats()
     {
-        if (!auth()->user()->isMaster()) {
+        $user = Auth::user();
+
+        if (!$user || !$user->isMaster()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 

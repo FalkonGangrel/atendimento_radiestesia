@@ -5,7 +5,7 @@ import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import type { AtendimentoFormData } from '@/types';
+import type { AtendimentoFormData, CustomField } from '@/types';
 import { AxiosError } from 'axios';
 
 export default function AtendimentoForm() {
@@ -16,10 +16,14 @@ export default function AtendimentoForm() {
     const { data: atendimento } = useAtendimento(id ? Number(id) : undefined);
     const { data: lists } = useLists();
 
+    // Estado para campos dinâmicos permitidos
+    const [customFields, setCustomFields] = useState<Record<string, CustomField[]>>({});
+    const [loadingFields, setLoadingFields] = useState(true);
+
     const [formData, setFormData] = useState<AtendimentoFormData>({
         patient_name: '',
         birth_date: '',
-        attendance_date: '',
+        attendance_date: new Date().toISOString().split('T')[0], // Data atual por padrão
         treatment_focus: '',
         observations: '',
         tables_needed: undefined,
@@ -29,6 +33,7 @@ export default function AtendimentoForm() {
         has_directives: false,
         has_ancestralidade: false,
         has_rco: false,
+        custom_data: {},
         items: [],
     });
 
@@ -36,6 +41,24 @@ export default function AtendimentoForm() {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
+    // Carregar campos dinâmicos permitidos para o usuário
+    useEffect(() => {
+        const fetchCustomFields = async () => {
+        try {
+            setLoadingFields(true);
+            const { data } = await api.get('/custom-fields/my-fields');
+            setCustomFields(data);
+        } catch (err) {
+            console.error('Erro ao carregar campos customizados:', err);
+        } finally {
+            setLoadingFields(false);
+        }
+        };
+
+        fetchCustomFields();
+    }, []);
+
+    // Preencher formulário ao editar
     useEffect(() => {
         if (atendimento) {
         setFormData({
@@ -51,14 +74,15 @@ export default function AtendimentoForm() {
             has_directives: atendimento.has_directives,
             has_ancestralidade: atendimento.has_ancestralidade,
             has_rco: atendimento.has_rco,
+            custom_data: atendimento.custom_data || {},
             items: [],
         });
 
         if (atendimento.items) {
             const itemsMap = new Map();
             atendimento.items.forEach((item) => {
-                itemsMap.set(item.list_item_id, item.quantity);
-                });
+            itemsMap.set(item.list_item_id, item.quantity);
+            });
             setSelectedItems(itemsMap);
         }
         }
@@ -110,6 +134,97 @@ export default function AtendimentoForm() {
         setSelectedItems(newMap);
     };
 
+    // Atualizar campo dinâmico
+    const updateCustomField = (slug: string, value: unknown) => {
+        setFormData({
+        ...formData,
+        custom_data: {
+            ...formData.custom_data,
+            [slug]: value,
+        },
+        });
+    };
+
+    // Renderizar campo dinâmico baseado no tipo
+    const renderCustomField = (field: CustomField) => {
+        const value = formData.custom_data?.[field.slug];
+
+        switch (field.type) {
+        case 'text':
+            return (
+            <Input
+                value={(value as string) || ''}
+                onChange={(e) => updateCustomField(field.slug, e.target.value)}
+                required={field.is_required}
+            />
+            );
+
+        case 'number':
+            return (
+            <Input
+                type="number"
+                value={(value as number) || ''}
+                onChange={(e) => updateCustomField(field.slug, Number(e.target.value))}
+                required={field.is_required}
+            />
+            );
+
+        case 'checkbox':
+            return (
+            <input
+                type="checkbox"
+                checked={(value as boolean) || false}
+                onChange={(e) => updateCustomField(field.slug, e.target.checked)}
+                className="w-4 h-4"
+            />
+            );
+
+        case 'select':
+            return (
+            <select
+                value={(value as string) || ''}
+                onChange={(e) => updateCustomField(field.slug, e.target.value)}
+                required={field.is_required}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            >
+                <option value="">Selecione...</option>
+                {field.options?.map((option) => (
+                <option key={option} value={option}>
+                    {option}
+                </option>
+                ))}
+            </select>
+            );
+
+        case 'textarea':
+            return (
+            <textarea
+                value={(value as string) || ''}
+                onChange={(e) => updateCustomField(field.slug, e.target.value)}
+                required={field.is_required}
+                className="w-full border rounded-lg p-2 min-h-[100px]"
+            />
+            );
+
+        case 'date':
+            return (
+            <Input
+                type="date"
+                value={(value as string) || ''}
+                onChange={(e) => updateCustomField(field.slug, e.target.value)}
+                required={field.is_required}
+            />
+            );
+
+        default:
+            return null;
+        }
+    };
+
+    if (loadingFields) {
+        return <div className="text-center py-10">Carregando formulário...</div>;
+    }
+
     return (
         <div className="space-y-6">
         <h1 className="text-3xl font-bold">
@@ -123,9 +238,10 @@ export default function AtendimentoForm() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+            {/* CAMPOS OBRIGATÓRIOS */}
             <Card>
             <CardHeader>
-                <CardTitle>Dados do Paciente</CardTitle>
+                <CardTitle>Dados do Paciente (Obrigatórios)</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div>
@@ -158,113 +274,48 @@ export default function AtendimentoForm() {
                     />
                 </div>
                 </div>
-            </CardContent>
-            </Card>
 
-            <Card>
-            <CardHeader>
-                <CardTitle>Informações do Tratamento</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
                 <div>
-                <label className="block text-sm font-medium mb-2">Foco do Tratamento</label>
+                <label className="block text-sm font-medium mb-2">Foco do Tratamento *</label>
                 <Input
                     value={formData.treatment_focus}
                     onChange={(e) => setFormData({ ...formData, treatment_focus: e.target.value })}
+                    required
                 />
                 </div>
 
                 <div>
-                <label className="block text-sm font-medium mb-2">Observações</label>
+                <label className="block text-sm font-medium mb-2">Observações *</label>
                 <textarea
                     className="w-full border rounded-lg p-2 min-h-[100px]"
                     value={formData.observations}
                     onChange={(e) => setFormData({ ...formData, observations: e.target.value })}
+                    required
                 />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-sm font-medium mb-2">Mesas Necessárias</label>
-                    <Input
-                    type="number"
-                    value={formData.tables_needed || ''}
-                    onChange={(e) =>
-                        setFormData({ ...formData, tables_needed: Number(e.target.value) || undefined })
-                    }
-                    />
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium mb-2">Linhas para Limpar</label>
-                    <Input
-                    type="number"
-                    value={formData.lines_to_clean || ''}
-                    onChange={(e) =>
-                        setFormData({ ...formData, lines_to_clean: Number(e.target.value) || undefined })
-                    }
-                    />
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium mb-2">Fractais (%)</label>
-                    <Input
-                    type="number"
-                    value={formData.fractals_percent || ''}
-                    onChange={(e) =>
-                        setFormData({ ...formData, fractals_percent: Number(e.target.value) || undefined })
-                    }
-                    />
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium mb-2">Duração do Tratamento (dias)</label>
-                    <Input
-                    type="number"
-                    value={formData.treatment_duration_days || ''}
-                    onChange={(e) =>
-                        setFormData({
-                        ...formData,
-                        treatment_duration_days: Number(e.target.value) || undefined,
-                        })
-                    }
-                    />
-                </div>
-                </div>
-
-                <div className="space-y-2">
-                <label className="flex items-center gap-2">
-                    <input
-                    type="checkbox"
-                    checked={formData.has_directives}
-                    onChange={(e) => setFormData({ ...formData, has_directives: e.target.checked })}
-                    />
-                    <span>Tem Diretivas</span>
-                </label>
-
-                <label className="flex items-center gap-2">
-                    <input
-                    type="checkbox"
-                    checked={formData.has_ancestralidade}
-                    onChange={(e) =>
-                        setFormData({ ...formData, has_ancestralidade: e.target.checked })
-                    }
-                    />
-                    <span>Tem Ancestralidade</span>
-                </label>
-
-                <label className="flex items-center gap-2">
-                    <input
-                    type="checkbox"
-                    checked={formData.has_rco}
-                    onChange={(e) => setFormData({ ...formData, has_rco: e.target.checked })}
-                    />
-                    <span>Tem RCO</span>
-                </label>
                 </div>
             </CardContent>
             </Card>
 
+            {/* CAMPOS DINÂMICOS POR SEÇÃO */}
+            {Object.entries(customFields).map(([sectionName, fields]) => (
+            <Card key={sectionName}>
+                <CardHeader>
+                <CardTitle>{sectionName}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                {fields.map((field) => (
+                    <div key={field.id}>
+                    <label className="block text-sm font-medium mb-2">
+                        {field.name} {field.is_required && '*'}
+                    </label>
+                    {renderCustomField(field)}
+                    </div>
+                ))}
+                </CardContent>
+            </Card>
+            ))}
+
+            {/* SELEÇÃO DE ITENS DAS LISTAS */}
             {lists && lists.length > 0 && (
             <Card>
                 <CardHeader>
@@ -310,6 +361,7 @@ export default function AtendimentoForm() {
             </Card>
             )}
 
+            {/* BOTÕES DE AÇÃO */}
             <div className="flex gap-4">
             <Button type="submit" disabled={isLoading}>
                 {isLoading ? 'Salvando...' : isEditing ? 'Atualizar' : 'Criar'}

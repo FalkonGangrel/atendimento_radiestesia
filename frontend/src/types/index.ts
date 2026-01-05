@@ -3,6 +3,7 @@ export interface User {
   name: string;
   email: string;
   role: 'master' | 'atendente';
+  created_at: string;
 }
 
 export interface List {
@@ -42,6 +43,7 @@ export interface Atendimento {
   has_ancestralidade: boolean;
   has_rco: boolean;
   status: 'em_andamento' | 'concluido' | 'cancelado';
+  custom_data?: Record<string, unknown>; // ← NOVO: campos dinâmicos
   created_at: string;
   updated_at: string;
   items?: AtendimentoItem[];
@@ -75,6 +77,7 @@ export interface AtendimentoFormData {
   has_directives: boolean;
   has_ancestralidade: boolean;
   has_rco: boolean;
+  custom_data?: Record<string, unknown>; // ← NOVO: campos dinâmicos
   items: {
     list_item_id: number;
     quantity?: number;
@@ -87,4 +90,43 @@ export interface DashboardMasterStats {
   total_atendimentos: number;
   concluidos: number;
   em_andamento: number;
+}
+
+// ====================================================================
+// NOVOS TIPOS PARA CAMPOS DINÂMICOS
+// ====================================================================
+
+export interface FieldSection {
+  id: number;
+  name: string;
+  slug: string;
+  order: number;
+  active: boolean;
+  fields?: CustomField[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CustomField {
+  id: number;
+  section_id: number;
+  name: string;
+  slug: string;
+  type: 'text' | 'number' | 'checkbox' | 'select' | 'textarea' | 'date';
+  options: string[] | null;
+  order: number;
+  is_required: boolean;
+  active: boolean;
+  section?: FieldSection;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserFieldPermission {
+  id: number;
+  user_id: number;
+  custom_field_id: number;
+  created_at: string;
+  updated_at: string;
+  customField?: CustomField;
 }
