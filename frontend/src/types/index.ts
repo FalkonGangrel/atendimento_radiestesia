@@ -155,7 +155,7 @@ export interface TipoAtendimento {
   nome: string;
   slug: string;
   descricao?: string;
-  valor: number;
+  valor: string | number;
   duracao_minutos?: number;
   ativo: boolean;
   ordem: number;

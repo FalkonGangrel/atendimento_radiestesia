@@ -20,7 +20,7 @@ class TipoAtendimento extends Model
     ];
 
     protected $casts = [
-        'valor' => 'decimal:2',
+        'valor' => 'float',
         'ativo' => 'boolean',
     ];
 

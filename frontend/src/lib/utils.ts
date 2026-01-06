@@ -9,3 +9,8 @@ export function formatDate(date: string): string {
 export function formatDateTime(date: string): string {
     return new Date(date).toLocaleString('pt-BR');
 }
+
+export function formatCurrency(value: string | number): string {
+    const numValue = typeof value === 'number' ? value : parseFloat(value);
+    return numValue.toFixed(2);
+}

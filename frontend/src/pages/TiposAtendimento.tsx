@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
+import { formatCurrency } from '@/lib/utils';
 import type { TipoAtendimento } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -88,7 +89,7 @@ export default function TiposAtendimento() {
                             <div>
                             <p className="text-xs text-gray-500">Valor</p>
                             <p className="font-bold text-lg">
-                                R$ {tipo.valor.toFixed(2)}
+                                R$ {formatCurrency(tipo.valor)}
                             </p>
                             </div>
                             {tipo.duracao_minutos && (
