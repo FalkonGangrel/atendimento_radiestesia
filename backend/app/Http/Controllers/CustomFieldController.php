@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CustomField;
 use App\Services\CustomFieldService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CustomFieldController extends Controller
 {
@@ -70,5 +71,18 @@ class CustomFieldController extends Controller
         CustomFieldService::deleteField($id);
 
         return response()->json(['message' => 'Campo deletado com sucesso']);
+    }
+
+    public function getForCurrentUser()
+    {
+        $userId = Auth::id();
+
+        if (!$userId) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $fields = CustomFieldService::getPermittedFieldsGroupedBySection($userId);
+
+        return response()->json($fields);
     }
 }

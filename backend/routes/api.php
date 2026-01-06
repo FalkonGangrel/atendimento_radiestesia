@@ -8,8 +8,10 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MasterController;
 use App\Http\Controllers\FieldSectionController;
 use App\Http\Controllers\CustomFieldController;
+use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserFieldPermissionController;
+use App\Http\Controllers\TipoAtendimentoController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -64,6 +66,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('atendimentos', AtendimentoController::class);
 
     // ====================================================================
+    // CLIENTES (todos os usuários autenticados)
+    // ====================================================================
+    Route::apiResource('clientes', ClienteController::class);
+
+    // ====================================================================
+    // TIPOS DE ATENDIMENTO (todos podem visualizar, apenas Master pode criar/editar)
+    // ====================================================================
+    Route::get('/tipos-atendimento', [TipoAtendimentoController::class, 'index']);
+
+    // ====================================================================
     // ROTAS MASTER (protegidas pelo middleware 'master')
     // ====================================================================
     Route::middleware('master')->group(function () {
@@ -89,6 +101,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/users/{id}', [UserController::class, 'show']);
         Route::put('/users/{id}', [UserController::class, 'update']);
         Route::delete('/users/{id}', [UserController::class, 'destroy']);
+
+        //Gerenciamento de Tipos de Atendimento
+        Route::post('/tipos-atendimento', [TipoAtendimentoController::class, 'store']);
+        Route::get('/tipos-atendimento/{id}', [TipoAtendimentoController::class, 'show']);
+        Route::put('/tipos-atendimento/{id}', [TipoAtendimentoController::class, 'update']);
+        Route::delete('/tipos-atendimento/{id}', [TipoAtendimentoController::class, 'destroy']);
 
         // Gerenciamento de Permissões de Campos por Usuário
         Route::get('/users/{userId}/permissions', [UserFieldPermissionController::class, 'getUserPermissions']);

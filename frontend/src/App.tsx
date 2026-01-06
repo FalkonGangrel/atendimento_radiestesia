@@ -16,6 +16,11 @@ import DashboardMaster from '@/pages/DashboardMaster';
 import { Usuarios } from '@/pages/Usuarios';
 import { CamposConfiguraveis } from '@/pages/CamposConfiguraveis';
 import { PermissoesUsuario } from '@/pages/PermissoesUsuario';
+import ClienteForm from '@/pages/ClienteForm';
+import ClienteDetail from '@/pages/ClienteDetail';
+import Clientes from '@/pages/Clientes';
+import TiposAtendimento from '@/pages/TiposAtendimento';
+import TipoAtendimentoForm from '@/pages/TipoAtendimentoForm';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 const queryClient = new QueryClient();
@@ -64,6 +69,16 @@ export default function App() {
             <Route path="/master/usuarios" element={<MasterRoute><Usuarios /></MasterRoute>} />
             <Route path="/master/campos" element={<MasterRoute><CamposConfiguraveis /></MasterRoute>} />
             <Route path="/master/permissoes/:userId" element={<MasterRoute><PermissoesUsuario /></MasterRoute>} />
+            <Route path="/master/tipos-atendimento" element={<PrivateRoute><TiposAtendimento /></PrivateRoute>} />
+            <Route path="/master/tipos-atendimento/novo" element={<PrivateRoute><TipoAtendimentoForm /></PrivateRoute>} />
+            <Route path="/master/tipos-atendimento/:id" element={<PrivateRoute><TipoAtendimentoForm /></PrivateRoute>} />
+            <Route path="/master/tipos-atendimento/:id/editar" element={<PrivateRoute><TipoAtendimentoForm /></PrivateRoute>} />
+
+            {/* Rotas de Clientes */}
+            <Route path="/clientes" element={<PrivateRoute><Clientes /></PrivateRoute>} />
+            <Route path="/clientes/novo" element={<PrivateRoute><ClienteForm /></PrivateRoute>} />
+            <Route path="/clientes/:id" element={<PrivateRoute><ClienteDetail /></PrivateRoute>} />
+            <Route path="/clientes/:id/editar" element={<PrivateRoute><ClienteForm /></PrivateRoute>} />
 
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" />} />

@@ -30,6 +30,9 @@ export interface ListItem {
 
 export interface Atendimento {
   id: number;
+  user_id: number;
+  cliente_id?: number;
+  tipo_atendimento_id?: number; // NOVO
   patient_name: string;
   birth_date: string;
   attendance_date: string;
@@ -43,10 +46,12 @@ export interface Atendimento {
   has_ancestralidade: boolean;
   has_rco: boolean;
   status: 'em_andamento' | 'concluido' | 'cancelado';
-  custom_data?: Record<string, unknown>; // ← NOVO: campos dinâmicos
+  valor_cobrado?: number; // NOVO
+  custom_data?: Record<string, unknown>;
+  cliente?: Cliente;
+  tipoAtendimento?: TipoAtendimento; // NOVO
   created_at: string;
   updated_at: string;
-  items?: AtendimentoItem[];
 }
 
 export interface AtendimentoItem {
@@ -129,4 +134,31 @@ export interface UserFieldPermission {
   created_at: string;
   updated_at: string;
   customField?: CustomField;
+}
+
+export interface Cliente {
+  id: number;
+  user_id: number;
+  nome: string;
+  email?: string;
+  telefone?: string;
+  whatsapp?: string;
+  data_nascimento?: string;
+  observacoes?: string;
+  ativo: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TipoAtendimento {
+  id: number;
+  nome: string;
+  slug: string;
+  descricao?: string;
+  valor: number;
+  duracao_minutos?: number;
+  ativo: boolean;
+  ordem: number;
+  created_at: string;
+  updated_at: string;
 }

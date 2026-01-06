@@ -11,7 +11,11 @@ class UserPolicy
 
     public function before(User $user, string $ability): bool|null
     {
-        return $user->isMaster() ? true : null;
+        if ($user->isMaster()) {
+            return true;
+        }
+
+        return null; // continua avaliando as regras abaixo
     }
 
     public function viewAny(User $user): bool

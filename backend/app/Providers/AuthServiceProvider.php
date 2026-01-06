@@ -9,11 +9,13 @@ use App\Models\FieldSection;
 use App\Models\ListModel;
 use App\Models\ListItem;
 use App\Models\User;
+use App\Models\TipoAtendimento;
 use App\Policies\CustomFieldPolicy;
 use App\Policies\FieldSectionPolicy;
 use App\Policies\ListPolicy;
 use App\Policies\ListItemPolicy;
 use App\Policies\UserPolicy;
+use App\Policies\TipoAtendimentoPolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -25,6 +27,7 @@ class AuthServiceProvider extends ServiceProvider
         FieldSection::class => FieldSectionPolicy::class,
         ListModel::class => ListPolicy::class,
         ListItem::class => ListItemPolicy::class,
+        TipoAtendimento::class => TipoAtendimentoPolicy::class,
         User::class => UserPolicy::class,
     ];
 

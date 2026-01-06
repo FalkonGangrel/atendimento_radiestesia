@@ -4,9 +4,10 @@ namespace App\Policies;
 
 use Illuminate\Auth\Access\HandlesAuthorization;
 use App\Models\User;
-use App\Models\ListModel;
+use App\Models\TipoAtendimento;
 
-class ListPolicy
+
+class TipoAtendimentoPolicy
 {
     use HandlesAuthorization;
 
@@ -25,7 +26,7 @@ class ListPolicy
         return true;
     }
 
-    public function view(User $user, ListModel $list): bool
+    public function view(User $user, TipoAtendimento $tipoAtendimento): bool
     {
         return true;
     }
@@ -36,12 +37,12 @@ class ListPolicy
         return false;
     }
 
-    public function update(User $user, ListModel $list): bool
+    public function update(User $user, TipoAtendimento $tipoAtendimento): bool
     {
         return false;
     }
 
-    public function delete(User $user, ListModel $list): bool
+    public function delete(User $user, TipoAtendimento $tipoAtendimento): bool
     {
         return false;
     }

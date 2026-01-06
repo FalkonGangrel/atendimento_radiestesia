@@ -11,8 +11,6 @@ class ListController extends Controller
 {
     public function index()
     {
-        $this->authorize('viewAny', ListModel::class);
-
         return response()->json(
             ListModel::with('items')->where('active', true)->get()
         );

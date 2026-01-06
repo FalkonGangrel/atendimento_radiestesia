@@ -303,14 +303,18 @@ export default function AtendimentoForm() {
                 <CardTitle>{sectionName}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                {fields.map((field) => (
+                {Array.isArray(fields) && fields.length > 0 ? (
+                    fields.map((field) => (
                     <div key={field.id}>
-                    <label className="block text-sm font-medium mb-2">
+                        <label className="block text-sm font-medium mb-2">
                         {field.name} {field.is_required && '*'}
-                    </label>
-                    {renderCustomField(field)}
+                        </label>
+                        {renderCustomField(field)}
                     </div>
-                ))}
+                    ))
+                ) : (
+                    <p className="text-gray-500 text-sm">Nenhum campo nesta seção</p>
+                )}
                 </CardContent>
             </Card>
             ))}

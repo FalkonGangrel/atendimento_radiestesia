@@ -42,7 +42,7 @@ export default function Layout({ children }: LayoutProps) {
                 onClick={() => navigate('/')}
                 className="w-full text-left px-4 py-2 rounded hover:bg-gray-800 transition"
             >
-                {sidebarOpen ? 'Dashboard' : '📊'}
+                {sidebarOpen ? '📊 Dashboard' : '📊'}
             </button>
 
             {/* Atendimentos */}
@@ -50,7 +50,7 @@ export default function Layout({ children }: LayoutProps) {
                 onClick={() => navigate('/atendimentos')}
                 className="w-full text-left px-4 py-2 rounded hover:bg-gray-800 transition"
             >
-                {sidebarOpen ? 'Meus Atendimentos' : '📋'}
+                {sidebarOpen ? '📋 Meus Atendimentos' : '📋'}
             </button>
 
             {/* Novo Atendimento */}
@@ -58,7 +58,15 @@ export default function Layout({ children }: LayoutProps) {
                 onClick={() => navigate('/novo-atendimento')}
                 className="w-full text-left px-4 py-2 rounded hover:bg-gray-800 transition"
             >
-                {sidebarOpen ? 'Novo Atendimento' : '➕'}
+                {sidebarOpen ? '➕ Novo Atendimento' : '➕'}
+            </button>
+
+            {/* Clientes */}
+            <button
+                onClick={() => navigate('/clientes')}
+                className="w-full text-left px-4 py-2 rounded hover:bg-gray-800 transition"
+            >
+                {sidebarOpen ? '👥 Clientes' : '👥'}
             </button>
 
             {/* Divisor */}
@@ -76,6 +84,13 @@ export default function Layout({ children }: LayoutProps) {
                     className="w-full text-left px-4 py-2 rounded hover:bg-gray-800 transition"
                 >
                     {sidebarOpen ? '👥 Usuários' : '👥'}
+                </button>
+
+                <button
+                    onClick={() => navigate('/master/tipos-atendimento')}
+                    className="w-full text-left px-4 py-2 rounded hover:bg-gray-800 transition"
+                >
+                    {sidebarOpen ? '💰 Tipos de Atendimento' : '💰'}
                 </button>
 
                 <button
