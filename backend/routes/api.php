@@ -12,6 +12,7 @@ use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserFieldPermissionController;
 use App\Http\Controllers\TipoAtendimentoController;
+use App\Http\Controllers\TipoAtendimentoPermissionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -73,6 +74,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ====================================================================
     // TIPOS DE ATENDIMENTO (todos podem visualizar, apenas Master pode criar/editar)
     // ====================================================================
+    Route::get('/me/atendimento-permissions', [TipoAtendimentoPermissionController::class, 'getMyPermissions']);
     Route::get('/tipos-atendimento', [TipoAtendimentoController::class, 'index']);
 
     // ====================================================================
@@ -103,10 +105,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
         //Gerenciamento de Tipos de Atendimento
+        Route::get('/tipos-atendimento', [TipoAtendimentoController::class, 'index']);
         Route::post('/tipos-atendimento', [TipoAtendimentoController::class, 'store']);
         Route::get('/tipos-atendimento/{id}', [TipoAtendimentoController::class, 'show']);
         Route::put('/tipos-atendimento/{id}', [TipoAtendimentoController::class, 'update']);
         Route::delete('/tipos-atendimento/{id}', [TipoAtendimentoController::class, 'destroy']);
+
+        //Permissões de Tipos de Atendimento por Usuário
+        Route::get('/tipos-atendimento/{tipoId}/users/{userId}/permissions', [TipoAtendimentoPermissionController::class, 'getUserPermissions']);
+        Route::post('/tipos-atendimento/{tipoId}/users/{userId}/permissions/sync', [TipoAtendimentoPermissionController::class, 'syncPermissions']);
 
         // Gerenciamento de Permissões de Campos por Usuário
         Route::get('/users/{userId}/permissions', [UserFieldPermissionController::class, 'getUserPermissions']);

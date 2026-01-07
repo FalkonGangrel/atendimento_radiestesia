@@ -10,9 +10,7 @@ class AtendimentoItem extends Model
     protected $table = 'atendimento_items';
 
     protected $fillable = [
-        'user_id',
-        'atendimento_table',
-        'atendimento_id',
+        'template_atendimento_id',
         'list_item_id',
         'quantity',
     ];
@@ -21,9 +19,9 @@ class AtendimentoItem extends Model
         'quantity' => 'integer',
     ];
 
-    public function user(): BelongsTo
+    public function atendimento(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(TemplateAtendimento::class, 'template_atendimento_id');
     }
 
     public function listItem(): BelongsTo

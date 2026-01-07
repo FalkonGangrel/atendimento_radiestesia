@@ -15,6 +15,7 @@ class TipoAtendimentoController extends Controller
     {
         $tipos = TipoAtendimento::where('ativo', true)
             ->orderBy('ordem')
+            ->orderBy('nome')
             ->get();
 
         return response()->json($tipos);

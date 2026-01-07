@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Model;
 
 class ListItem extends Model
@@ -14,6 +15,12 @@ class ListItem extends Model
 
     public function list()
     {
-        return $this->belongsTo(Lists::class);
+        return $this->belongsTo(ListModel::class);
+    }
+
+    public function tiposAtendimento(): BelongsToMany
+    {
+        return $this->belongsToMany(TipoAtendimento::class, 'tipo_atendimento_list_item')
+            ->withTimestamps();
     }
 }

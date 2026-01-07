@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class ListModel extends Model
 {
@@ -30,4 +31,12 @@ class ListModel extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function tiposAtendimento(): BelongsToMany
+    {
+        return $this->belongsToMany(TipoAtendimento::class, 'tipo_atendimento_list', 'list_id', 'tipo_atendimento_id')
+            ->withPivot('ordem')
+            ->withTimestamps();
+    }
+
 }

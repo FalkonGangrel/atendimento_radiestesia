@@ -2,48 +2,36 @@
 
 namespace App\Policies;
 
-use Illuminate\Auth\Access\HandlesAuthorization;
 use App\Models\User;
 use App\Models\TipoAtendimento;
 
-
 class TipoAtendimentoPolicy
 {
-    use HandlesAuthorization;
-
-    public function before(User $user, string $ability): bool|null
+    /**
+     * Master pode tudo
+     */
+    public function before(User $user, string $ability): ?bool
     {
-        if ($user->role === 'master') {
+        if ($user->isMaster()) {
             return true;
         }
 
         return null;
     }
 
-    // TODOS autenticados podem listar
-    public function viewAny(User $user): bool
+    /**
+     * Verificar se o usuário pode visualizar este tipo
+     */
+    public function view(User $user, TipoAtendimento $tipo): bool
     {
-        return true;
+        return $user->hasPermissionForTipo($tipo->id);
     }
 
-    public function view(User $user, TipoAtendimento $tipoAtendimento): bool
+    /**
+     * Verificar se o usuário pode criar atendimento deste tipo
+     */
+    public function create(User $user, TipoAtendimento $tipo): bool
     {
-        return true;
-    }
-
-    // Apenas master (bloqueado aqui, liberado no before)
-    public function create(User $user): bool
-    {
-        return false;
-    }
-
-    public function update(User $user, TipoAtendimento $tipoAtendimento): bool
-    {
-        return false;
-    }
-
-    public function delete(User $user, TipoAtendimento $tipoAtendimento): bool
-    {
-        return false;
+        return $user->hasPermissionForTipo($tipo->id);
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Atendimento;
+use App\Models\TipoAtendimento;
+use App\Models\ListModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -22,6 +24,20 @@ class AtendimentoController extends Controller
 
     public function store(Request $request)
     {
+        $user = $request->user();
+
+        // Validar tipo de atendimento
+        if ($request->has('tipo_atendimento_id')) {
+            $tipo = TipoAtendimento::findOrFail($request->tipo_atendimento_id);
+
+            // Verificar permissão usando Policy
+            if (!$user->can('create', $tipo)) {
+                return response()->json([
+                    'message' => 'Você não tem permissão para criar atendimentos deste tipo'
+                ], 403);
+            }
+        }
+    
         $validated = $request->validate([
             'cliente_id' => 'nullable|exists:clientes,id',
             'patient_name' => 'required|string|max:255',

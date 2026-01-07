@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CustomField extends Model
@@ -35,5 +36,12 @@ class CustomField extends Model
     public function permissions(): HasMany
     {
         return $this->hasMany(UserFieldPermission::class);
+    }
+
+    public function tiposAtendimento(): BelongsToMany
+    {
+        return $this->belongsToMany(TipoAtendimento::class, 'tipo_atendimento_custom_field')
+            ->withPivot('ordem')
+            ->withTimestamps();
     }
 }

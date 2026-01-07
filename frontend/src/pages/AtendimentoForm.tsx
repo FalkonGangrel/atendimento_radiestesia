@@ -43,19 +43,32 @@ export default function AtendimentoForm() {
 
     // Carregar campos dinâmicos permitidos para o usuário
     useEffect(() => {
-        const fetchCustomFields = async () => {
-        try {
+        const fetchMyPermissions = async () => {
+            try {
             setLoadingFields(true);
-            const { data } = await api.get('/custom-fields/my-fields');
-            setCustomFields(data);
-        } catch (err) {
-            console.error('Erro ao carregar campos customizados:', err);
-        } finally {
+            const { data } = await api.get('/me/atendimento-permissions');
+
+            // Organizar campos por seção
+            const fieldsBySection: Record<string, CustomField[]> = {};
+            data.fields.forEach((field: CustomField) => {
+                const sectionName = field.section?.name || 'Sem Seção';
+                if (!fieldsBySection[sectionName]) {
+                fieldsBySection[sectionName] = [];
+                }
+                fieldsBySection[sectionName].push(field);
+            });
+
+            setCustomFields(fieldsBySection);
+            setAvailableTipos(data.tipos);
+            setAvailableLists(data.lists);
+            } catch (err) {
+            console.error('Erro ao carregar permissões:', err);
+            } finally {
             setLoadingFields(false);
-        }
+            }
         };
 
-        fetchCustomFields();
+        fetchMyPermissions();
     }, []);
 
     // Preencher formulário ao editar

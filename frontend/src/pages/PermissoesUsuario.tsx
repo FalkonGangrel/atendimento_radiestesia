@@ -1,99 +1,167 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
-import type { FieldSection, CustomField, User } from '@/types';
+import type { User, TipoAtendimento, CustomField, List } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { ArrowLeft, Save } from 'lucide-react';
 
 export function PermissoesUsuario() {
     const { userId } = useParams<{ userId: string }>();
     const navigate = useNavigate();
+
     const [user, setUser] = useState<User | null>(null);
-    const [sections, setSections] = useState<FieldSection[]>([]);
-    const [selectedFields, setSelectedFields] = useState<number[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
+    const [tipos, setTipos] = useState<TipoAtendimento[]>([]);
+    const [selectedTipo, setSelectedTipo] = useState<number | null>(null);
+
+    const [hasPermission, setHasPermission] = useState(false);
+    const [availableFields, setAvailableFields] = useState<CustomField[]>([]);
+    const [availableLists, setAvailableLists] = useState<List[]>([]);
+
+    const [selectedFieldIds, setSelectedFieldIds] = useState<number[]>([]);
+    const [selectedListIds, setSelectedListIds] = useState<number[]>([]);
+    const [selectedItemIds, setSelectedItemIds] = useState<number[]>([]);
+
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (userId) {
-        fetchData();
-        }
+        fetchUser();
+        fetchTipos();
     }, [userId]);
 
-    const fetchData = async () => {
+    useEffect(() => {
+        if (selectedTipo) {
+        fetchPermissions();
+        }
+    }, [selectedTipo]);
+
+    const fetchUser = async () => {
+        try {
+        const { data } = await api.get(`/users/${userId}`);
+        setUser(data);
+        } catch (err) {
+        setError('Erro ao carregar usuário');
+        console.error(err);
+        }
+    };
+
+    const fetchTipos = async () => {
+        try {
+        const { data } = await api.get('/tipos-atendimento');
+        setTipos(data);
+        } catch (err) {
+        setError('Erro ao carregar tipos de atendimento');
+        console.error(err);
+        }
+    };
+
+    const fetchPermissions = async () => {
+        if (!selectedTipo) return;
+
         try {
         setLoading(true);
+        const { data } = await api.get(
+            `/master/tipos-atendimento/${selectedTipo}/users/${userId}/permissions`
+        );
 
-        // Fetch user
-        const userRes = await api.get(`/users/${userId}`);
-        setUser(userRes.data);
+        setHasPermission(data.has_permission);
+        setAvailableFields(data.fields);
+        setAvailableLists(data.lists);
 
-        // Fetch sections with fields
-        const sectionsRes = await api.get('/field-sections');
-        setSections(sectionsRes.data);
+        // Pré-selecionar campos/listas/itens já vinculados
+        setSelectedFieldIds(data.fields.map((f: CustomField) => f.id));
+        setSelectedListIds(data.lists.map((l: List) => l.id));
 
-        // Fetch user permissions
-        const permRes = await api.get(`/users/${userId}/permissions`);
-        const fieldIds = permRes.data.map((p: any) => p.custom_field_id);
-        setSelectedFields(fieldIds);
+        const itemIds: number[] = [];
+        data.lists.forEach((list: List) => {
+            if (list.items) {
+            list.items.forEach((item) => itemIds.push(item.id));
+            }
+        });
+        setSelectedItemIds(itemIds);
 
         setError(null);
         } catch (err) {
-        setError('Erro ao carregar dados');
+        setError('Erro ao carregar permissões');
         console.error(err);
         } finally {
         setLoading(false);
         }
     };
 
-    const handleToggleField = (fieldId: number) => {
-        setSelectedFields((prev) =>
-        prev.includes(fieldId) ? prev.filter((id) => id !== fieldId) : [...prev, fieldId]
-        );
-    };
-
-    const handleSavePermissions = async () => {
-        if (!userId) return;
+    const handleSave = async () => {
+        if (!selectedTipo) return;
 
         try {
-        setSaving(true);
-        await api.post(`/users/${userId}/permissions/sync`, {
-            field_ids: selectedFields,
-        });
+        setLoading(true);
+        await api.post(
+            `/master/tipos-atendimento/${selectedTipo}/users/${userId}/permissions/sync`,
+            {
+            has_permission: hasPermission,
+            field_ids: selectedFieldIds,
+            list_ids: selectedListIds,
+            item_ids: selectedItemIds,
+            }
+        );
+
+        alert('Permissões atualizadas com sucesso!');
         setError(null);
-        alert('Permissões salvas com sucesso!');
         } catch (err) {
         setError('Erro ao salvar permissões');
         console.error(err);
         } finally {
-        setSaving(false);
+        setLoading(false);
         }
     };
 
-    if (loading) {
-        return (
-        <div className="flex items-center justify-center min-h-screen">
-            <div className="text-gray-500">Carregando...</div>
-        </div>
+    const toggleField = (fieldId: number) => {
+        setSelectedFieldIds((prev) =>
+        prev.includes(fieldId)
+            ? prev.filter((id) => id !== fieldId)
+            : [...prev, fieldId]
         );
+    };
+
+    const toggleList = (listId: number) => {
+        setSelectedListIds((prev) =>
+        prev.includes(listId)
+            ? prev.filter((id) => id !== listId)
+            : [...prev, listId]
+        );
+    };
+
+    const toggleItem = (itemId: number) => {
+        setSelectedItemIds((prev) =>
+        prev.includes(itemId)
+            ? prev.filter((id) => id !== itemId)
+            : [...prev, itemId]
+        );
+    };
+
+    if (!user) {
+        return <div className="text-center py-10">Carregando usuário...</div>;
     }
 
     return (
         <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
             {/* Header */}
             <div className="mb-8">
-            <button
+            <Button
+                variant="ghost"
                 onClick={() => navigate('/master/usuarios')}
-                className="text-blue-600 hover:text-blue-700 mb-4 text-sm"
+                className="mb-4"
             >
-                ← Voltar
-            </button>
-            <h1 className="text-3xl font-bold text-gray-900">Permissões de Campos</h1>
-            {user && (
-                <p className="text-gray-600 mt-2">
-                Usuário: <span className="font-medium">{user.name}</span> ({user.email})
-                </p>
-            )}
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Voltar
+            </Button>
+            <h1 className="text-3xl font-bold text-gray-900">
+                Permissões de {user.name}
+            </h1>
+            <p className="text-gray-600 mt-2">
+                Configure quais tipos de atendimento, campos e listas este atendente pode acessar
+            </p>
             </div>
 
             {/* Error Message */}
@@ -103,63 +171,122 @@ export function PermissoesUsuario() {
             </div>
             )}
 
-            {/* Info Box */}
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm">
-            <p>
-                <strong>Nota:</strong> Os campos obrigatórios (Nome do Paciente, Data de Nascimento, Data do Atendimento,
-                Foco do Tratamento e Observações) são automaticamente permitidos para todos os usuários.
-            </p>
-            </div>
+            {/* Seletor de Tipo */}
+            <Card className="mb-6">
+            <CardHeader>
+                <CardTitle>Selecione o Tipo de Atendimento</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <select
+                value={selectedTipo || ''}
+                onChange={(e) => setSelectedTipo(Number(e.target.value))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                >
+                <option value="">-- Selecione um tipo --</option>
+                {tipos.map((tipo) => (
+                    <option key={tipo.id} value={tipo.id}>
+                    {tipo.nome}
+                    </option>
+                ))}
+                </select>
+            </CardContent>
+            </Card>
 
-            {/* Permissions */}
-            <div className="space-y-6">
-            {sections.map((section) => (
-                <div key={section.id} className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">{section.name}</h2>
+            {selectedTipo && (
+            <>
+                {/* Permissão Geral */}
+                <Card className="mb-6">
+                <CardHeader>
+                    <CardTitle>Permissão Geral</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <label className="flex items-center gap-3">
+                    <input
+                        type="checkbox"
+                        checked={hasPermission}
+                        onChange={(e) => setHasPermission(e.target.checked)}
+                        className="w-5 h-5 rounded"
+                    />
+                    <span className="text-gray-700">
+                        Permitir que {user.name} crie atendimentos deste tipo
+                    </span>
+                    </label>
+                </CardContent>
+                </Card>
 
-                {section.fields && section.fields.length > 0 ? (
-                    <div className="space-y-3">
-                    {section.fields.map((field) => (
-                        <label
-                        key={field.id}
-                        className="flex items-center gap-3 p-3 bg-gray-50 rounded hover:bg-gray-100 cursor-pointer"
-                        >
-                        <input
+                {/* Campos Customizados */}
+                {availableFields.length > 0 && (
+                <Card className="mb-6">
+                    <CardHeader>
+                    <CardTitle>Campos Customizados</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                    <div className="space-y-2">
+                        {availableFields.map((field) => (
+                        <label key={field.id} className="flex items-center gap-3">
+                            <input
                             type="checkbox"
-                            checked={selectedFields.includes(field.id)}
-                            onChange={() => handleToggleField(field.id)}
-                            className="w-4 h-4"
-                        />
-                        <div>
-                            <p className="font-medium text-gray-900">{field.name}</p>
-                            <p className="text-xs text-gray-600">Tipo: {field.type}</p>
-                        </div>
+                            checked={selectedFieldIds.includes(field.id)}
+                            onChange={() => toggleField(field.id)}
+                            className="w-5 h-5 rounded"
+                            />
+                            <span className="text-gray-700">{field.name}</span>
                         </label>
-                    ))}
+                        ))}
                     </div>
-                ) : (
-                    <p className="text-gray-500 text-sm">Nenhum campo nesta seção</p>
+                    </CardContent>
+                </Card>
                 )}
-                </div>
-            ))}
-            </div>
 
-            {/* Save Button */}
-            <div className="mt-8 flex gap-4">
-            <button
-                onClick={handleSavePermissions}
-                disabled={saving}
-                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400"
-            >
-                {saving ? 'Salvando...' : 'Salvar Permissões'}
-            </button>
-            <button
-                onClick={() => navigate('/master/usuarios')}
-                className="px-6 py-3 bg-gray-400 text-white rounded-lg hover:bg-gray-500"
-            >
-                Cancelar
-            </button>
-            </div>
+                {/* Listas */}
+                {availableLists.length > 0 && (
+                <Card className="mb-6">
+                    <CardHeader>
+                    <CardTitle>Listas e Itens</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                    {availableLists.map((list) => (
+                        <div key={list.id} className="mb-6">
+                        <label className="flex items-center gap-3 mb-3">
+                            <input
+                            type="checkbox"
+                            checked={selectedListIds.includes(list.id)}
+                            onChange={() => toggleList(list.id)}
+                            className="w-5 h-5 rounded"
+                            />
+                            <span className="font-bold text-gray-900">{list.name}</span>
+                        </label>
+
+                        {list.items && list.items.length > 0 && (
+                            <div className="ml-8 space-y-2">
+                            {list.items.map((item) => (
+                                <label key={item.id} className="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedItemIds.includes(item.id)}
+                                    onChange={() => toggleItem(item.id)}
+                                    className="w-4 h-4 rounded"
+                                />
+                                <span className="text-gray-700">{item.name}</span>
+                                </label>
+                            ))}
+                            </div>
+                        )}
+                        </div>
+                    ))}
+                    </CardContent>
+                </Card>
+                )}
+
+                {/* Botão Salvar */}
+                <div className="flex justify-end">
+                <Button onClick={handleSave} disabled={loading}>
+                    <Save className="w-4 h-4 mr-2" />
+                    {loading ? 'Salvando...' : 'Salvar Permissões'}
+                </Button>
+                </div>
+            </>
+            )}
         </div>
         </div>
     );
