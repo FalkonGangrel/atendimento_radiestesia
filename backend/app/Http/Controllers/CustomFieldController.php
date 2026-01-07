@@ -72,17 +72,4 @@ class CustomFieldController extends Controller
 
         return response()->json(['message' => 'Campo deletado com sucesso']);
     }
-
-    public function getForCurrentUser()
-    {
-        $userId = Auth::id();
-
-        if (!$userId) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        $fields = CustomFieldService::getPermittedFieldsGroupedBySection($userId);
-
-        return response()->json($fields);
-    }
 }

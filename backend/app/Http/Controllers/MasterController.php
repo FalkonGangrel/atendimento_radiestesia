@@ -4,46 +4,31 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate; // Importar Gate
 use App\Models\User;
+use App\Models\ListModel; // Importar ListModel
+use App\Models\ListItem; // Importar ListItem
+use App\Models\TemplateAtendimento; // Importar TemplateAtendimento
 
 class MasterController extends Controller
 {
     public function stats(Request $request)
     {
+        // 1. Autorização: Apenas Masters podem acessar este dashboard
+        Gate::authorize('view-dashboard');
+
         try {
-            // 1. Contar usuários (sempre funciona)
+            // 2. Contar usuários
             $totalUsers = User::count();
 
-            // 2. Contar listas (verificar se a tabela existe)
-            $totalLists = 0;
-            if (DB::getSchemaBuilder()->hasTable('lists')) {
-                $totalLists = DB::table('lists')->count();
-            }
+            // 3. Contar listas (assumindo que a tabela 'lists' existe após as migrations)
+            $totalLists = ListModel::count();
 
-            // 3. Contar itens de listas (verificar se a tabela existe)
-            $totalListItems = 0;
-            if (DB::getSchemaBuilder()->hasTable('list_items')) {
-                $totalListItems = DB::table('list_items')->count();
-            }
+            // 4. Contar itens de listas (assumindo que a tabela 'list_items' existe após as migrations)
+            $totalListItems = ListItem::count();
 
-            // 4. Contar atendimentos de TODOS os usuários
-            $totalAtendimentos = 0;
-
-            $users = User::all();
-            foreach ($users as $user) {
-                $tableName = "{$user->id}_atendimento";
-
-                // Verificar se a tabela existe
-                if (DB::getSchemaBuilder()->hasTable($tableName)) {
-                    try {
-                        $count = DB::table($tableName)->count();
-                        $totalAtendimentos += $count;
-                    } catch (\Exception $e) {
-                        // Se der erro ao contar, ignora essa tabela
-                        continue;
-                    }
-                }
-            }
+            // 5. Contar atendimentos de TODOS os usuários (da tabela única 'template_atendimento')
+            $totalAtendimentos = TemplateAtendimento::count();
 
             return response()->json([
                 'total_users' => $totalUsers,
@@ -51,11 +36,11 @@ class MasterController extends Controller
                 'total_lists' => $totalLists,
                 'total_list_items' => $totalListItems,
             ]);
-
         } catch (\Exception $e) {
-            // Retornar erro detalhado para debug
+            // Retornar erro detalhado para debug em ambiente de desenvolvimento
+            // Em produção, considere um erro mais genérico ou logar o erro
             return response()->json([
-                'message' => 'Erro ao buscar estatísticas',
+                'message' => 'Erro ao buscar estatísticas do Master',
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),

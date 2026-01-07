@@ -14,7 +14,6 @@ class TemplateAtendimento extends Model
         'user_id',
         'cliente_id',
         'tipo_atendimento_id',
-        'valor_cobrado',
         'patient_name',
         'birth_date',
         'attendance_date',
@@ -29,16 +28,18 @@ class TemplateAtendimento extends Model
         'has_rco',
         'status',
         'custom_data',
+        'valor_cobrado',
     ];
 
     protected $casts = [
         'birth_date' => 'date',
         'attendance_date' => 'date',
+        'fractals_percent' => 'float',
+        'valor_cobrado' => 'float',
         'has_directives' => 'boolean',
         'has_ancestralidade' => 'boolean',
         'has_rco' => 'boolean',
         'custom_data' => 'array',
-        'valor_cobrado' => 'float',
     ];
 
     public function user(): BelongsTo
@@ -48,7 +49,7 @@ class TemplateAtendimento extends Model
 
     public function cliente(): BelongsTo
     {
-        return $this->belongsTo(Cliente::class);
+        return $this->belongsTo(Cliente::class, 'cliente_id');
     }
 
     public function tipoAtendimento(): BelongsTo

@@ -9,14 +9,26 @@ use Illuminate\Support\Facades\Auth;
 class TipoAtendimentoController extends Controller
 {
     /**
-     * Listar todos os tipos de atendimento (TODOS os usuários)
+     * Listar tipos de atendimento permitidos para o usuário logado.
+     * Masters veem todos, atendentes veem apenas os permitidos.
      */
     public function index()
     {
-        $tipos = TipoAtendimento::where('ativo', true)
-            ->orderBy('ordem')
-            ->orderBy('nome')
-            ->get();
+        $user = Auth::user();
+
+        if ($user->isMaster()) {
+            // Master vê todos os tipos ativos
+            $tipos = TipoAtendimento::where('ativo', true)
+                ->orderBy('ordem')
+                ->orderBy('nome')
+                ->get();
+        } else {
+            $tipos = $user->tiposAtendimentoPermitidos()
+                ->where('ativo', true)
+                ->orderBy('ordem')
+                ->orderBy('nome')
+                ->get();
+        }
 
         return response()->json($tipos);
     }
@@ -26,6 +38,7 @@ class TipoAtendimentoController extends Controller
      */
     public function store(Request $request)
     {
+        // Autorização via Policy: A TipoAtendimentoPolicy já garante que apenas Masters podem criar
         $this->authorize('create', TipoAtendimento::class);
 
         $validated = $request->validate([
@@ -44,22 +57,26 @@ class TipoAtendimentoController extends Controller
     }
 
     /**
-     * Mostrar um tipo específico
+     * Mostrar um tipo específico (com autorização via Policy)
      */
     public function show($id)
     {
         $tipo = TipoAtendimento::findOrFail($id);
+
+        // Autorização via Policy: Garante que o usuário tem permissão para visualizar este tipo específico
+        $this->authorize('view', $tipo);
+
         return response()->json($tipo);
     }
 
     /**
-     * Atualizar tipo (APENAS MASTER)
+     * Atualizar tipo (APENAS MASTER, com autorização via Policy na instância)
      */
     public function update(Request $request, $id)
     {
-        $this->authorize('update', TipoAtendimento::class);
-
         $tipo = TipoAtendimento::findOrFail($id);
+
+        $this->authorize('update', $tipo);
 
         $validated = $request->validate([
             'nome' => 'sometimes|required|string|max:255',
@@ -77,13 +94,14 @@ class TipoAtendimentoController extends Controller
     }
 
     /**
-     * Deletar tipo (APENAS MASTER)
+     * Deletar tipo (APENAS MASTER, com autorização via Policy na instância)
      */
     public function destroy($id)
     {
-        $this->authorize('delete', TipoAtendimento::class);
-
         $tipo = TipoAtendimento::findOrFail($id);
+
+        $this->authorize('delete', $tipo);
+
         $tipo->delete();
 
         return response()->json(['message' => 'Tipo de atendimento deletado com sucesso']);

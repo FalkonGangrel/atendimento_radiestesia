@@ -50,4 +50,20 @@ class User extends Authenticatable
     {
         return $this->hasMany(Cliente::class, 'user_id');
     }
+
+    public function atendimentos(): HasMany
+    {
+        return $this->hasMany(TemplateAtendimento::class, 'user_id');
+    }
+
+    public function hasPermissionForTipo(int $tipoId): bool
+    {
+        if ($this->isMaster()) {
+            return true;
+        }
+
+        return $this->tiposAtendimentoPermitidos()
+            ->where('tipos_atendimento.id', $tipoId)
+            ->exists();
+    }
 }

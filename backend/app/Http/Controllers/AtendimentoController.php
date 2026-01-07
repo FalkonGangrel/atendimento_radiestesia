@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Atendimento;
+use App\Models\TemplateAtendimento;
+use App\Models\AtendimentoItem;
 use App\Models\TipoAtendimento;
 use App\Models\ListModel;
+use App\Models\ListItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -14,8 +16,8 @@ class AtendimentoController extends Controller
     {
         $userId = Auth::id();
 
-        $atendimentos = Atendimento::where('user_id', $userId)
-            ->with('cliente')
+        $atendimentos = TemplateAtendimento::where('user_id', $userId)
+            ->with(['cliente'])
             ->orderBy('attendance_date', 'desc')
             ->get();
 
@@ -26,18 +28,25 @@ class AtendimentoController extends Controller
     {
         $user = $request->user();
 
-        // Validar tipo de atendimento
-        if ($request->has('tipo_atendimento_id')) {
-            $tipo = TipoAtendimento::findOrFail($request->tipo_atendimento_id);
+        // =======================
+        // VALIDAR TIPO
+        // =======================
+        $request->validate([
+            'tipo_atendimento_id' => 'required|exists:tipos_atendimento,id',
+        ]);
 
-            // Verificar permissão usando Policy
-            if (!$user->can('create', $tipo)) {
-                return response()->json([
-                    'message' => 'Você não tem permissão para criar atendimentos deste tipo'
-                ], 403);
-            }
+        $tipo = TipoAtendimento::findOrFail($request->tipo_atendimento_id);
+
+        // POLICY: pode criar?
+        if (!$user->can('create', $tipo)) {
+            return response()->json([
+                'message' => 'Você não tem permissão para criar atendimentos deste tipo'
+            ], 403);
         }
-    
+
+        // ==============================
+        // VALIDAR DADOS DO ATENDIMENTO
+        // ==============================
         $validated = $request->validate([
             'cliente_id' => 'nullable|exists:clientes,id',
             'patient_name' => 'required|string|max:255',
@@ -54,12 +63,53 @@ class AtendimentoController extends Controller
             'has_rco' => 'boolean',
             'status' => 'nullable|in:em_andamento,concluido,cancelado',
             'custom_data' => 'nullable|array',
+            'items' => 'nullable|array'
         ]);
 
-        $validated['user_id'] = Auth::id();
+        // Forçar user_id
+        $validated['user_id'] = $user->id;
 
-        $atendimento = Atendimento::create($validated);
-        $atendimento->load('cliente');
+        // Tipo de atendimento
+        $validated['tipo_atendimento_id'] = $request->tipo_atendimento_id;
+
+        // ==============================
+        // CRIAR ATENDIMENTO
+        // ==============================
+        $atendimento = TemplateAtendimento::create($validated);
+
+        // ==============================
+        // VALIDAR E CRIAR ITEMS
+        // ==============================
+        if ($request->has('items') && is_array($request->items)) {
+
+            // Listas permitidas
+            $listasPermitidas = $tipo->lists()->pluck('lists.id')->toArray();
+            $itensPermitidos = $tipo->listItems()->pluck('list_items.id')->toArray();
+
+            foreach ($request->items as $itemData) {
+
+                // itemData deve ter: list_item_id, quantity (opcional)
+                if (!isset($itemData['list_item_id'])) continue;
+
+                $itemId = $itemData['list_item_id'];
+
+                if (!in_array($itemId, $itensPermitidos)) {
+                    return response()->json([
+                        'message' => "Item {$itemId} não permitido para este tipo de atendimento"
+                    ], 403);
+                }
+
+                // criar item
+                AtendimentoItem::create([
+                    'template_atendimento_id' => $atendimento->id,
+                    'list_item_id' => $itemId,
+                    'quantity' => $itemData['quantity'] ?? null
+                ]);
+            }
+        }
+
+        // Carregar tudo
+        $atendimento->load(['cliente', 'items.listItem']);
 
         return response()->json($atendimento, 201);
     }
@@ -68,7 +118,7 @@ class AtendimentoController extends Controller
     {
         $userId = Auth::id();
 
-        $atendimento = Atendimento::where('id', $id)
+        $atendimento = TemplateAtendimento::where('id', $id)
             ->where('user_id', $userId)
             ->with(['cliente', 'items.listItem'])
             ->firstOrFail();
@@ -80,7 +130,7 @@ class AtendimentoController extends Controller
     {
         $userId = Auth::id();
 
-        $atendimento = Atendimento::where('id', $id)
+        $atendimento = TemplateAtendimento::where('id', $id)
             ->where('user_id', $userId)
             ->firstOrFail();
 
@@ -99,10 +149,11 @@ class AtendimentoController extends Controller
             'has_ancestralidade' => 'boolean',
             'has_rco' => 'boolean',
             'status' => 'nullable|in:em_andamento,concluido,cancelado',
-            'custom_data' => 'nullable|array',
+            'custom_data' => 'nullable|array'
         ]);
 
         $atendimento->update($validated);
+
         $atendimento->load('cliente');
 
         return response()->json($atendimento);
@@ -112,7 +163,7 @@ class AtendimentoController extends Controller
     {
         $userId = Auth::id();
 
-        $atendimento = Atendimento::where('id', $id)
+        $atendimento = TemplateAtendimento::where('id', $id)
             ->where('user_id', $userId)
             ->firstOrFail();
 
@@ -125,8 +176,9 @@ class AtendimentoController extends Controller
     {
         $userId = Auth::id();
 
-        $total = Atendimento::where('user_id', $userId)->count();
-        $esteMes = Atendimento::where('user_id', $userId)
+        $total = TemplateAtendimento::where('user_id', $userId)->count();
+
+        $esteMes = TemplateAtendimento::where('user_id', $userId)
             ->whereMonth('attendance_date', now()->month)
             ->whereYear('attendance_date', now()->year)
             ->count();

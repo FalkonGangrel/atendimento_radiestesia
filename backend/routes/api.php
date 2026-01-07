@@ -10,9 +10,9 @@ use App\Http\Controllers\FieldSectionController;
 use App\Http\Controllers\CustomFieldController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\UserFieldPermissionController;
 use App\Http\Controllers\TipoAtendimentoController;
-use App\Http\Controllers\TipoAtendimentoPermissionController;
+use App\Http\Controllers\TipoAtendimentoPermissionController; // Importar o novo Controller
+
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -20,7 +20,6 @@ use Illuminate\Support\Facades\Route;
 | Rotas Públicas (sem autenticação)
 |--------------------------------------------------------------------------
 */
-
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -29,7 +28,6 @@ Route::post('/login', [AuthController::class, 'login']);
 | Rotas Protegidas (requer autenticação)
 |--------------------------------------------------------------------------
 */
-
 Route::middleware('auth:sanctum')->group(function () {
 
     // ====================================================================
@@ -41,24 +39,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/profile', [AuthController::class, 'updateProfile']);
 
     // ====================================================================
-    // CAMPOS CUSTOMIZADOS - Todos podem ver seus campos permitidos
+    // LISTAS (todos autenticados podem visualizar, apenas Master pode criar/editar)
     // ====================================================================
-    Route::get('/custom-fields/my-fields', [CustomFieldController::class, 'getForCurrentUser']);
-
-    // ====================================================================
-    // LISTAS (todos podem visualizar, apenas Master pode criar/editar)
-    // ====================================================================
-    Route::get('/lists', [ListController::class, 'index']);
-    Route::post('/lists', [ListController::class, 'store']);
-    Route::put('/lists/{id}', [ListController::class, 'update']);
-    Route::delete('/lists/{id}', [ListController::class, 'destroy']);
+    Route::get('/lists', [ListController::class, 'index']); // Atendentes veem listas ativas (Policy restringe Masters a ver todas)
+    Route::post('/lists', [ListController::class, 'store']); // Apenas Master (via Policy)
+    Route::put('/lists/{id}', [ListController::class, 'update']); // Apenas Master (via Policy)
+    Route::delete('/lists/{id}', [ListController::class, 'destroy']); // Apenas Master (via Policy)
 
     // ====================================================================
     // ITENS DE LISTAS (apenas Master pode criar/editar)
     // ====================================================================
-    Route::post('/list-items', [ListItemController::class, 'store']);
-    Route::put('/list-items/{id}', [ListItemController::class, 'update']);
-    Route::delete('/list-items/{id}', [ListItemController::class, 'destroy']);
+    Route::post('/list-items', [ListItemController::class, 'store']); // Apenas Master (via Policy)
+    Route::put('/list-items/{id}', [ListItemController::class, 'update']); // Apenas Master (via Policy)
+    Route::delete('/list-items/{id}', [ListItemController::class, 'destroy']); // Apenas Master (via Policy)
 
     // ====================================================================
     // ATENDIMENTOS (todos os usuários autenticados)
@@ -72,55 +65,39 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('clientes', ClienteController::class);
 
     // ====================================================================
-    // TIPOS DE ATENDIMENTO (todos podem visualizar, apenas Master pode criar/editar)
+    // TIPOS DE ATENDIMENTO (Atendentes veem os permitidos, Masters veem todos)
     // ====================================================================
-    Route::get('/me/atendimento-permissions', [TipoAtendimentoPermissionController::class, 'getMyPermissions']);
-    Route::get('/tipos-atendimento', [TipoAtendimentoController::class, 'index']);
+    Route::get('/tipos-atendimento', [TipoAtendimentoController::class, 'index']); // Lógica de filtragem no Controller
+    Route::get('/me/atendimento-permissions', [TipoAtendimentoPermissionController::class, 'getMyPermissions']); // Endpoint para atendentes carregarem suas permissões
 
     // ====================================================================
     // ROTAS MASTER (protegidas pelo middleware 'master')
     // ====================================================================
     Route::middleware('master')->group(function () {
-
         // Dashboard Master
-        Route::get('/master/stats', [MasterController::class, 'stats']);
-        Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
-
-        // Gerenciamento de Seções de Campos
-        Route::get('/field-sections', [FieldSectionController::class, 'index']);
-        Route::post('/field-sections', [FieldSectionController::class, 'store']);
-        Route::put('/field-sections/{id}', [FieldSectionController::class, 'update']);
-        Route::delete('/field-sections/{id}', [FieldSectionController::class, 'destroy']);
-
-        // Gerenciamento de Campos Customizados
-        Route::get('/custom-fields', [CustomFieldController::class, 'index']);
-        Route::post('/custom-fields', [CustomFieldController::class, 'store']);
-        Route::put('/custom-fields/{id}', [CustomFieldController::class, 'update']);
-        Route::delete('/custom-fields/{id}', [CustomFieldController::class, 'destroy']);
+        Route::get('/master/stats', [MasterController::class, 'stats']); // Estatísticas gerais do sistema
+        Route::get('/dashboard/stats', [DashboardController::class, 'stats']); // Estatísticas por atendente
 
         // Gerenciamento de Usuários
-        Route::get('/users', [UserController::class, 'index']);
-        Route::get('/users/{id}', [UserController::class, 'show']);
-        Route::put('/users/{id}', [UserController::class, 'update']);
-        Route::delete('/users/{id}', [UserController::class, 'destroy']);
+        Route::apiResource('users', UserController::class)->except(['store']); // Store é feito via AuthController::register
+        // A rota de criação de usuário (store) é tratada pelo AuthController::register,
+        // mas se você quiser uma rota para Masters criarem usuários diretamente, adicione:
+        // Route::post('/users', [UserController::class, 'store']);
 
-        //Gerenciamento de Tipos de Atendimento
-        Route::get('/tipos-atendimento', [TipoAtendimentoController::class, 'index']);
+        // Gerenciamento de Seções de Campos
+        Route::apiResource('field-sections', FieldSectionController::class);
+
+        // Gerenciamento de Campos Customizados
+        Route::apiResource('custom-fields', CustomFieldController::class);
+
+        // Gerenciamento de Tipos de Atendimento (CRUD completo para Master)
         Route::post('/tipos-atendimento', [TipoAtendimentoController::class, 'store']);
         Route::get('/tipos-atendimento/{id}', [TipoAtendimentoController::class, 'show']);
         Route::put('/tipos-atendimento/{id}', [TipoAtendimentoController::class, 'update']);
         Route::delete('/tipos-atendimento/{id}', [TipoAtendimentoController::class, 'destroy']);
 
-        //Permissões de Tipos de Atendimento por Usuário
-        Route::get('/tipos-atendimento/{tipoId}/users/{userId}/permissions', [TipoAtendimentoPermissionController::class, 'getUserPermissions']);
-        Route::post('/tipos-atendimento/{tipoId}/users/{userId}/permissions/sync', [TipoAtendimentoPermissionController::class, 'syncPermissions']);
-
-        // Gerenciamento de Permissões de Campos por Usuário
-        Route::get('/users/{userId}/permissions', [UserFieldPermissionController::class, 'getUserPermissions']);
-        Route::post('/users/{userId}/permissions/sync', [UserFieldPermissionController::class, 'syncUserPermissions']);
-        Route::post('/users/{userId}/permissions/grant', [UserFieldPermissionController::class, 'grantPermission']);
-        Route::delete('/users/{userId}/permissions/{fieldId}', [UserFieldPermissionController::class, 'revokePermission']);
-
+        // Gerenciamento de Permissões de Tipos de Atendimento por Usuário (APENAS MASTER)
+        Route::get('/users/{userId}/tipos-atendimento/{tipoId}/permissions', [TipoAtendimentoPermissionController::class, 'getUserPermissions']);
+        Route::post('/users/{userId}/tipos-atendimento/{tipoId}/permissions/sync', [TipoAtendimentoPermissionController::class, 'syncPermissions']);
     });
-
 });
