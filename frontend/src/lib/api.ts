@@ -1,30 +1,49 @@
-import axios from 'axios';
+import axios, {
+    AxiosError,
+    type AxiosInstance,
+    type InternalAxiosRequestConfig,
+} from 'axios';
 
-export const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+import { getAuthToken, clearAuthToken } from './utils';
+
+export const api: AxiosInstance = axios.create({
+    baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api',
     headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
     },
 });
 
-// Interceptor para adicionar token automaticamente
-api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
+/**
+ * Interceptor de request
+ * Adiciona o token de autenticação automaticamente
+ */
+api.interceptors.request.use(
+    (config: InternalAxiosRequestConfig) => {
+        const token = getAuthToken();
 
-// Interceptor para tratar erros de autenticação
+        if (token) {
+            // Axios v1+: headers é AxiosHeaders
+            config.headers.set('Authorization', `Bearer ${token}`);
+        }
+
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
+/**
+ * Interceptor de response
+ * Trata erros globais de autenticação
+ */
 api.interceptors.response.use(
     (response) => response,
-    (error) => {
+    (error: AxiosError) => {
         if (error.response?.status === 401) {
-            localStorage.removeItem('token');
-            window.location.href = '/login';
+            clearAuthToken();
+            // Redirecionamento será responsabilidade do AuthContext
         }
+
         return Promise.reject(error);
     }
 );

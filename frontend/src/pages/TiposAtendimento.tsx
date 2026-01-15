@@ -1,145 +1,114 @@
-import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '@/lib/api';
+import { useTiposAtendimentoList, useDeleteTipoAtendimento } from '@/hooks/useTiposAtendimento'; // Importa os novos hooks
 import { formatCurrency } from '@/lib/utils';
-import type { TipoAtendimento } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 
 export default function TiposAtendimento() {
     const navigate = useNavigate();
-    const [tipos, setTipos] = useState<TipoAtendimento[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        fetchTipos();
-    }, []);
-
-    const fetchTipos = async () => {
-        try {
-        setLoading(true);
-        const { data } = await api.get('/tipos-atendimento');
-        setTipos(data);
-        setError(null);
-        } catch (err) {
-        setError('Erro ao carregar tipos de atendimento');
-        console.error(err);
-        } finally {
-        setLoading(false);
-        }
-    };
+    const { data: tipos, isLoading, isError, error } = useTiposAtendimentoList(); // Usa useQuery
+    const deleteMutation = useDeleteTipoAtendimento(); // Usa useMutation para exclusão
 
     const handleDelete = async (id: number) => {
-        if (!confirm('Tem certeza que deseja deletar este tipo de atendimento?')) return;
-
+        if (!confirm('Tem certeza que deseja desativar este tipo de atendimento?')) return;
         try {
-        await api.delete(`/tipos-atendimento/${id}`);
-        fetchTipos();
+            await deleteMutation.mutateAsync(id);
         } catch (err) {
-        setError('Erro ao deletar tipo de atendimento');
-        console.error(err);
+            // O erro já é tratado pelo useMutation, mas podemos adicionar feedback visual aqui
+            console.error('Erro ao desativar tipo de atendimento:', err);
         }
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
-        <div className="flex items-center justify-center min-h-screen">
-            <div className="text-gray-500">Carregando tipos de atendimento...</div>
-        </div>
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-gray-500">Carregando tipos de atendimento...</div>
+            </div>
+        );
+    }
+
+    if (isError) {
+        return (
+            <div className="flex items-center justify-center min-h-screen text-red-600">
+                Erro ao carregar tipos de atendimento: {error?.message}
+            </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-6xl mx-auto">
-            {/* Header */}
-            <div className="mb-8 flex justify-between items-center">
-            <div>
+        <div className="container mx-auto p-6">
+            <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold text-gray-900">Tipos de Atendimento</h1>
-                <p className="text-gray-600 mt-2">Gerencie os tipos de atendimento e seus valores</p>
-            </div>
-            <Button onClick={() => navigate('/master/tipos-atendimento/novo')}>
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Tipo
-            </Button>
-            </div>
-
-            {/* Error Message */}
-            {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-                {error}
-            </div>
-            )}
-
-            {/* Tipos List */}
-            {tipos.length > 0 ? (
-            <div className="grid gap-4">
-                {tipos.map((tipo) => (
-                <Card key={tipo.id}>
-                    <CardHeader>
-                    <div className="flex justify-between items-start">
-                        <div>
-                        <CardTitle>{tipo.nome}</CardTitle>
-                        {tipo.descricao && (
-                            <p className="text-sm text-gray-600 mt-2">{tipo.descricao}</p>
-                        )}
-                        <div className="flex gap-4 mt-3">
-                            <div>
-                            <p className="text-xs text-gray-500">Valor</p>
-                            <p className="font-bold text-lg">
-                                R$ {formatCurrency(tipo.valor)}
-                            </p>
-                            </div>
-                            {tipo.duracao_minutos && (
-                            <div>
-                                <p className="text-xs text-gray-500">Duração</p>
-                                <p className="font-bold">{tipo.duracao_minutos} min</p>
-                            </div>
-                            )}
-                        </div>
-                        </div>
-                        <div className="flex gap-2">
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => navigate(`/master/tipos-atendimento/${tipo.id}`)}
-                        >
-                            <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => navigate(`/master/tipos-atendimento/${tipo.id}/editar`)}
-                        >
-                            <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleDelete(tipo.id)}
-                        >
-                            <Trash2 className="w-4 h-4" />
-                        </Button>
-                        </div>
-                    </div>
-                    </CardHeader>
-                </Card>
-                ))}
-            </div>
-            ) : (
-            <Card>
-                <CardContent className="text-center py-12">
-                <p className="text-gray-500 mb-4">Nenhum tipo de atendimento cadastrado ainda.</p>
                 <Button onClick={() => navigate('/master/tipos-atendimento/novo')}>
                     <Plus className="w-4 h-4 mr-2" />
-                    Cadastrar Primeiro Tipo
+                    Novo Tipo
                 </Button>
-                </CardContent>
-            </Card>
+            </div>
+
+            {tipos && tipos.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {tipos.map((tipo) => (
+                        <Card key={tipo.id} className="shadow-lg hover:shadow-xl transition-shadow duration-200">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-xl font-semibold text-gray-800">
+                                    {tipo.name}
+                                </CardTitle>
+                                <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    tipo.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                }`}>
+                                    {tipo.active ? 'Ativo' : 'Inativo'}
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <p className="text-gray-600 text-sm">{tipo.description}</p>
+                                <div className="flex justify-between items-center text-gray-700">
+                                    <p>
+                                        <strong className="font-medium">Valor:</strong> {formatCurrency(tipo.value)}
+                                    </p>
+                                    <p>
+                                        <strong className="font-medium">Duração:</strong> {tipo.duration_minutes} min
+                                    </p>
+                                </div>
+                                <div className="flex gap-2 mt-4 justify-end">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => navigate(`/master/tipos-atendimento/${tipo.id}`)}
+                                    >
+                                        <Eye className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => navigate(`/master/tipos-atendimento/${tipo.id}/editar`)}
+                                    >
+                                        <Edit className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => handleDelete(tipo.id)}
+                                        disabled={deleteMutation.isPending || !tipo.active} // Desabilita se já inativo ou salvando
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            ) : (
+                <Card>
+                    <CardContent className="text-center py-12">
+                        <p className="text-gray-500 mb-4">Nenhum tipo de atendimento cadastrado ainda.</p>
+                        <Button onClick={() => navigate('/master/tipos-atendimento/novo')}>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Cadastrar Primeiro Tipo
+                        </Button>
+                    </CardContent>
+                </Card>
             )}
-        </div>
         </div>
     );
 }

@@ -1,357 +1,440 @@
-import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
-import type { FieldSection, CustomField } from '@/types';
+// src/pages/CamposConfiguraveis.tsx
+import React, { useState } from 'react';
+import {
+    useFieldSections,
+    useCreateFieldSection,
+    useDeleteFieldSection,
+    useCreateCustomField,
+    useDeleteCustomField,
+} from '@/hooks/useCamposConfiguraveis';
+import type { CustomFieldFormData, FieldSectionFormData } from '@/types';
+import {
+    Button,
+    Input,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+    Card,
+    CardHeader,
+    CardTitle,
+    CardContent,
+    Textarea, // Adicionado para campos de texto longo
+} from '@/components/ui'; // Ajuste o caminho conforme sua estrutura de UI
+import { Plus, Trash2 } from 'lucide-react';
+import { AxiosError } from 'axios'; // Importar AxiosError
 
-export function CamposConfiguraveis() {
-    const [sections, setSections] = useState<FieldSection[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+// Definir os tipos de campo para o select (mantido para o estado do formulário)
+type CustomFieldType = 'text' | 'number' | 'checkbox' | 'select' | 'textarea' | 'date';
+
+export default function CamposConfiguraveis() {
+    const { data: sections, isLoading, isError, error } = useFieldSections();
+    const createSectionMutation = useCreateFieldSection();
+    const deleteSectionMutation = useDeleteFieldSection();
+    const createFieldMutation = useCreateCustomField();
+    const deleteFieldMutation = useDeleteCustomField();
+
     const [activeTab, setActiveTab] = useState<'sections' | 'fields'>('sections');
-
-    // Form states
-    const [newSection, setNewSection] = useState({ name: '', slug: '' });
-    const [newField, setNewField] = useState({
-        section_id: 0,
+    const [newSectionFormData, setNewSectionFormData] = useState<FieldSectionFormData>({
         name: '',
         slug: '',
-        type: 'text' as const,
+        active: true,
+    });
+    const [newFieldFormData, setNewFieldFormData] = useState<CustomFieldFormData>({
+        section_id: null,
+        name: '',
+        slug: '',
+        type: 'text',
         options: '',
         is_required: false,
+        active: true,
     });
+    const [formError, setFormError] = useState<string | null>(null);
 
-    useEffect(() => {
-        fetchSections();
-    }, []);
+    const generateSlug = (name: string) => {
+        return name
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^\w\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-');
+    };
 
-    const fetchSections = async () => {
-        try {
-        setLoading(true);
-        const { data } = await api.get('/field-sections');
-        setSections(data);
-        setError(null);
-        } catch (err) {
-        setError('Erro ao carregar seções');
-        console.error(err);
-        } finally {
-        setLoading(false);
-        }
+    const handleSectionNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const name = e.target.value;
+        setNewSectionFormData({
+            ...newSectionFormData,
+            name,
+            slug: generateSlug(name),
+        });
+    };
+
+    const handleFieldNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const name = e.target.value;
+        setNewFieldFormData({
+            ...newFieldFormData,
+            name,
+            slug: generateSlug(name),
+        });
     };
 
     const handleAddSection = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newSection.name || !newSection.slug) return;
+        setFormError(null);
+
+        if (!newSectionFormData.name.trim() || !newSectionFormData.slug.trim()) {
+            setFormError('Nome e Slug da seção são obrigatórios.');
+            return;
+        }
 
         try {
-        const { data } = await api.post('/field-sections', {
-            ...newSection,
-            order: sections.length,
-            active: true,
-        });
-        setSections([...sections, data]);
-        setNewSection({ name: '', slug: '' });
+            await createSectionMutation.mutateAsync({
+                ...newSectionFormData,
+                order: sections ? sections.length : 0, // Define a ordem como o último
+            });
+            setNewSectionFormData({ name: '', slug: '', active: true });
         } catch (err) {
-        setError('Erro ao criar seção');
-        console.error(err);
+            const axiosErr = err as AxiosError;
+            setFormError(axiosErr.response?.data?.message || 'Erro ao criar seção. Verifique se o slug já existe.');
         }
     };
 
     const handleAddField = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newField.name || !newField.slug || newField.section_id === 0) return;
+        setFormError(null);
+
+        if (!newFieldFormData.name.trim() || !newFieldFormData.slug.trim() || newFieldFormData.section_id === null) {
+            setFormError('Nome, Slug e Seção do campo são obrigatórios.');
+            return;
+        }
+        if (newFieldFormData.type === 'select' && !newFieldFormData.options.trim()) {
+            setFormError('Opções são obrigatórias para campos do tipo "Select".');
+            return;
+        }
 
         try {
-        const fieldData = {
-            ...newField,
-            options: newField.type === 'select' ? newField.options.split(',').map(o => o.trim()) : null,
-        };
-
-        const { data } = await api.post('/custom-fields', fieldData);
-
-        setSections(sections.map(section =>
-            section.id === newField.section_id
-            ? { ...section, fields: [...(section.fields || []), data] }
-            : section
-        ));
-
-        setNewField({
-            section_id: 0,
-            name: '',
-            slug: '',
-            type: 'text',
-            options: '',
-            is_required: false,
-        });
+            const fieldPayload = {
+                ...newFieldFormData,
+                section_id: newFieldFormData.section_id!, // Garantido por validação
+                options: newFieldFormData.type === 'select'
+                    ? newFieldFormData.options.split(',').map(o => o.trim()).filter(o => o !== '')
+                    : null,
+                order: sections?.find(s => s.id === newFieldFormData.section_id)?.fields?.length || 0,
+            };
+            await createFieldMutation.mutateAsync(fieldPayload);
+            setNewFieldFormData({
+                section_id: null,
+                name: '',
+                slug: '',
+                type: 'text',
+                options: '',
+                is_required: false,
+                active: true,
+            });
         } catch (err) {
-        setError('Erro ao criar campo');
-        console.error(err);
+            const axiosErr = err as AxiosError;
+            setFormError(axiosErr.response?.data?.message || 'Erro ao criar campo. Verifique se o slug já existe na seção.');
         }
     };
 
     const handleDeleteSection = async (sectionId: number) => {
-        if (!confirm('Tem certeza que deseja deletar esta seção e todos seus campos?')) return;
-
+        if (!confirm('Tem certeza que deseja deletar esta seção e todos os seus campos?')) return;
+        setFormError(null);
         try {
-        await api.delete(`/field-sections/${sectionId}`);
-        setSections(sections.filter(s => s.id !== sectionId));
+            await deleteSectionMutation.mutateAsync(sectionId);
         } catch (err) {
-        setError('Erro ao deletar seção');
-        console.error(err);
+            const axiosErr = err as AxiosError;
+            setFormError(axiosErr.response?.data?.message || 'Erro ao deletar seção. Verifique se não há atendimentos vinculados.');
         }
     };
 
     const handleDeleteField = async (fieldId: number, sectionId: number) => {
         if (!confirm('Tem certeza que deseja deletar este campo?')) return;
-
+        setFormError(null);
         try {
-        await api.delete(`/custom-fields/${fieldId}`);
-        setSections(sections.map(section =>
-            section.id === sectionId
-            ? { ...section, fields: section.fields?.filter(f => f.id !== fieldId) }
-            : section
-        ));
+            await deleteFieldMutation.mutateAsync({ fieldId, sectionId });
         } catch (err) {
-        setError('Erro ao deletar campo');
-        console.error(err);
+            const axiosErr = err as AxiosError;
+            setFormError(axiosErr.response?.data?.message || 'Erro ao deletar campo. Verifique se não há atendimentos vinculados.');
         }
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
-        <div className="flex items-center justify-center min-h-screen">
-            <div className="text-gray-500">Carregando campos...</div>
-        </div>
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-gray-500">Carregando campos configuráveis...</div>
+            </div>
+        );
+    }
+
+    if (isError) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-red-500">Erro ao carregar dados: {error?.message || 'Erro desconhecido'}</div>
+            </div>
         );
     }
 
     return (
         <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-6xl mx-auto">
-            {/* Header */}
-            <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Campos Configuráveis</h1>
-            <p className="text-gray-600 mt-2">Crie e gerencie os campos que serão utilizados nos atendimentos</p>
-            </div>
-
-            {/* Error Message */}
-            {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-                {error}
-            </div>
-            )}
-
-            {/* Tabs */}
-            <div className="flex gap-4 mb-6">
-            <button
-                onClick={() => setActiveTab('sections')}
-                className={`px-4 py-2 rounded-lg font-medium ${
-                activeTab === 'sections'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 border border-gray-300'
-                }`}
-            >
-                Seções
-            </button>
-            <button
-                onClick={() => setActiveTab('fields')}
-                className={`px-4 py-2 rounded-lg font-medium ${
-                activeTab === 'fields'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-700 border border-gray-300'
-                }`}
-            >
-                Campos
-            </button>
-            </div>
-
-            {/* Sections Tab */}
-            {activeTab === 'sections' && (
-            <div className="space-y-6">
-                {/* Add Section Form */}
-                <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-bold mb-4">Nova Seção</h2>
-                <form onSubmit={handleAddSection} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                    <input
-                        type="text"
-                        placeholder="Nome da seção"
-                        value={newSection.name}
-                        onChange={(e) => setNewSection({ ...newSection, name: e.target.value })}
-                        className="px-4 py-2 border border-gray-300 rounded-lg"
-                    />
-                    <input
-                        type="text"
-                        placeholder="Slug (ex: informacoes-tratamento)"
-                        value={newSection.slug}
-                        onChange={(e) => setNewSection({ ...newSection, slug: e.target.value })}
-                        className="px-4 py-2 border border-gray-300 rounded-lg"
-                    />
-                    </div>
-                    <button
-                    type="submit"
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                    >
-                    Criar Seção
-                    </button>
-                </form>
+            <div className="max-w-6xl mx-auto">
+                {/* Header */}
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-gray-900">Campos Configuráveis</h1>
+                    <p className="text-gray-600 mt-2">Crie e gerencie os campos que serão utilizados nos atendimentos</p>
                 </div>
 
-                {/* Sections List */}
-                <div className="space-y-4">
-                {sections.map((section) => (
-                    <div key={section.id} className="bg-white rounded-lg shadow p-6">
-                    <div className="flex justify-between items-start mb-4">
-                        <div>
-                        <h3 className="text-lg font-bold text-gray-900">{section.name}</h3>
-                        <p className="text-sm text-gray-600">{section.slug}</p>
-                        </div>
-                        <button
-                        onClick={() => handleDeleteSection(section.id)}
-                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
-                        >
-                        Deletar
-                        </button>
+                {/* Error Message */}
+                {(formError || isError) && (
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                        {formError || error?.message || 'Ocorreu um erro.'}
                     </div>
-
-                    {/* Fields in Section */}
-                    {section.fields && section.fields.length > 0 && (
-                        <div className="mt-4 pt-4 border-t">
-                        <p className="text-sm font-medium text-gray-700 mb-3">Campos nesta seção:</p>
-                        <ul className="space-y-2">
-                            {section.fields.map((field) => (
-                            <li key={field.id} className="flex justify-between items-center text-sm bg-gray-50 p-3 rounded">
-                                <div>
-                                <span className="font-medium">{field.name}</span>
-                                <span className="text-gray-600 ml-2">({field.type})</span>
-                                </div>
-                                <button
-                                onClick={() => handleDeleteField(field.id, section.id)}
-                                className="text-red-600 hover:text-red-700 text-xs"
-                                >
-                                Remover
-                                </button>
-                            </li>
-                            ))}
-                        </ul>
-                        </div>
-                    )}
-                    </div>
-                ))}
-                </div>
-            </div>
-            )}
-
-            {/* Fields Tab */}
-            {activeTab === 'fields' && (
-            <div className="space-y-6">
-                {/* Add Field Form */}
-                <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-bold mb-4">Novo Campo</h2>
-                <form onSubmit={handleAddField} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                    <select
-                        value={newField.section_id}
-                        onChange={(e) => setNewField({ ...newField, section_id: Number(e.target.value) })}
-                        className="px-4 py-2 border border-gray-300 rounded-lg"
-                    >
-                        <option value={0}>Selecione uma seção</option>
-                        {sections.map((section) => (
-                        <option key={section.id} value={section.id}>
-                            {section.name}
-                        </option>
-                        ))}
-                    </select>
-
-                    <select
-                        value={newField.type}
-                        onChange={(e) => setNewField({ ...newField, type: e.target.value as any })}
-                        className="px-4 py-2 border border-gray-300 rounded-lg"
-                    >
-                        <option value="text">Texto</option>
-                        <option value="number">Número</option>
-                        <option value="checkbox">Checkbox</option>
-                        <option value="select">Select</option>
-                        <option value="textarea">Textarea</option>
-                        <option value="date">Data</option>
-                    </select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                    <input
-                        type="text"
-                        placeholder="Nome do campo"
-                        value={newField.name}
-                        onChange={(e) => setNewField({ ...newField, name: e.target.value })}
-                        className="px-4 py-2 border border-gray-300 rounded-lg"
-                    />
-                    <input
-                        type="text"
-                        placeholder="Slug (ex: duracao-tratamento)"
-                        value={newField.slug}
-                        onChange={(e) => setNewField({ ...newField, slug: e.target.value })}
-                        className="px-4 py-2 border border-gray-300 rounded-lg"
-                    />
-                    </div>
-
-                    {newField.type === 'select' && (
-                    <input
-                        type="text"
-                        placeholder="Opções (separadas por vírgula)"
-                        value={newField.options}
-                        onChange={(e) => setNewField({ ...newField, options: e.target.value })}
-                        className="px-4 py-2 border border-gray-300 rounded-lg w-full"
-                    />
-                    )}
-
-                    <label className="flex items-center gap-2">
-                    <input
-                        type="checkbox"
-                        checked={newField.is_required}
-                        onChange={(e) => setNewField({ ...newField, is_required: e.target.checked })}
-                        className="w-4 h-4"
-                    />
-                    <span className="text-gray-700">Campo obrigatório</span>
-                    </label>
-
-                    <button
-                    type="submit"
-                    className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                    >
-                    Criar Campo
-                    </button>
-                </form>
-                </div>
-
-                {/* Fields List */}
-                <div className="space-y-4">
-                {sections.map((section) =>
-                    section.fields && section.fields.length > 0 ? (
-                    <div key={section.id} className="bg-white rounded-lg shadow p-6">
-                        <h3 className="text-lg font-bold text-gray-900 mb-4">{section.name}</h3>
-                        <div className="space-y-2">
-                        {section.fields.map((field) => (
-                            <div key={field.id} className="flex justify-between items-center bg-gray-50 p-4 rounded">
-                            <div>
-                                <p className="font-medium text-gray-900">{field.name}</p>
-                                <p className="text-sm text-gray-600">
-                                Tipo: {field.type} | Obrigatório: {field.is_required ? 'Sim' : 'Não'}
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => handleDeleteField(field.id, section.id)}
-                                className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
-                            >
-                                Deletar
-                            </button>
-                            </div>
-                        ))}
-                        </div>
-                    </div>
-                    ) : null
                 )}
+
+                {/* Tabs */}
+                <div className="flex gap-4 mb-6">
+                    <Button
+                        variant={activeTab === 'sections' ? 'default' : 'outline'}
+                        onClick={() => setActiveTab('sections')}
+                    >
+                        Seções
+                    </Button>
+                    <Button
+                        variant={activeTab === 'fields' ? 'default' : 'outline'}
+                        onClick={() => setActiveTab('fields')}
+                    >
+                        Campos
+                    </Button>
                 </div>
+
+                {/* Sections Tab */}
+                {activeTab === 'sections' && (
+                    <div className="space-y-6">
+                        {/* Add Section Form */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Nova Seção</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <form onSubmit={handleAddSection} className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <Input
+                                            type="text"
+                                            placeholder="Nome da seção"
+                                            value={newSectionFormData.name}
+                                            onChange={handleSectionNameChange}
+                                            required
+                                        />
+                                        <Input
+                                            type="text"
+                                            placeholder="Slug (ex: informacoes-tratamento)"
+                                            value={newSectionFormData.slug}
+                                            onChange={(e) => setNewSectionFormData({ ...newSectionFormData, slug: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <Button type="submit" disabled={createSectionMutation.isPending}>
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        {createSectionMutation.isPending ? 'Criando...' : 'Criar Seção'}
+                                    </Button>
+                                </form>
+                            </CardContent>
+                        </Card>
+
+                        {/* Sections List */}
+                        <div className="space-y-4">
+                            {sections && sections.length > 0 ? (
+                                sections.map((section) => (
+                                    <Card key={section.id}>
+                                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                            <CardTitle className="text-lg font-bold text-gray-900">
+                                                {section.name}
+                                                <span className="text-sm text-gray-600 ml-2 font-normal">(Slug: {section.slug})</span>
+                                            </CardTitle>
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                onClick={() => handleDeleteSection(section.id)}
+                                                disabled={deleteSectionMutation.isPending}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </CardHeader>
+                                        <CardContent>
+                                            {section.fields && section.fields.length > 0 ? (
+                                                <div className="mt-4 pt-4 border-t border-gray-200">
+                                                    <p className="text-sm font-medium text-gray-700 mb-3">Campos nesta seção:</p>
+                                                    <ul className="space-y-2">
+                                                        {section.fields.map((field) => (
+                                                            <li key={field.id} className="flex justify-between items-center text-sm bg-gray-50 p-3 rounded">
+                                                                <div>
+                                                                    <span className="font-medium">{field.name}</span>
+                                                                    <span className="text-gray-600 ml-2">({field.type})</span>
+                                                                    {field.is_required && <span className="ml-2 text-red-500 text-xs">(Obrigatório)</span>}
+                                                                    {!field.active && <span className="ml-2 text-yellow-600 text-xs">(Inativo)</span>}
+                                                                </div>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => handleDeleteField(field.id, section.id)}
+                                                                    disabled={deleteFieldMutation.isPending}
+                                                                >
+                                                                    <Trash2 className="w-4 h-4 text-red-600" />
+                                                                </Button>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            ) : (
+                                                <p className="text-gray-500 text-sm mt-2">Nenhum campo nesta seção.</p>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                ))
+                            ) : (
+                                <p className="text-gray-500 text-center py-4">Nenhuma seção cadastrada ainda.</p>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Fields Tab */}
+                {activeTab === 'fields' && (
+                    <div className="space-y-6">
+                        {/* Add Field Form */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Novo Campo</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <form onSubmit={handleAddField} className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <Select
+                                            value={newFieldFormData.section_id?.toString() || ''}
+                                            onValueChange={(value) => setNewFieldFormData({ ...newFieldFormData, section_id: value ? Number(value) : null })}
+                                            required
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecione uma seção" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="">Selecione uma seção</SelectItem>
+                                                {sections?.map((section) => (
+                                                    <SelectItem key={section.id} value={section.id.toString()}>
+                                                        {section.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+
+                                        <Select
+                                            value={newFieldFormData.type}
+                                            onValueChange={(value) => setNewFieldFormData({ ...newFieldFormData, type: value as CustomFieldType })}
+                                            required
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Tipo de campo" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="text">Texto</SelectItem>
+                                                <SelectItem value="number">Número</SelectItem>
+                                                <SelectItem value="checkbox">Checkbox</SelectItem>
+                                                <SelectItem value="select">Select</SelectItem>
+                                                <SelectItem value="textarea">Textarea</SelectItem>
+                                                <SelectItem value="date">Data</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <Input
+                                            type="text"
+                                            placeholder="Nome do campo"
+                                            value={newFieldFormData.name}
+                                            onChange={handleFieldNameChange}
+                                            required
+                                        />
+                                        <Input
+                                            type="text"
+                                            placeholder="Slug (ex: duracao-tratamento)"
+                                            value={newFieldFormData.slug}
+                                            onChange={(e) => setNewFieldFormData({ ...newFieldFormData, slug: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+
+                                    {newFieldFormData.type === 'select' && (
+                                        <Textarea // Usando Textarea para opções
+                                            placeholder="Opções (separadas por vírgula)"
+                                            value={newFieldFormData.options}
+                                            onChange={(e) => setNewFieldFormData({ ...newFieldFormData, options: e.target.value })}
+                                            required={newFieldFormData.type === 'select'}
+                                        />
+                                    )}
+
+                                    <label className="flex items-center gap-2">
+                                        <Input
+                                            type="checkbox"
+                                            checked={newFieldFormData.is_required}
+                                            onChange={(e) => setNewFieldFormData({ ...newFieldFormData, is_required: e.target.checked })}
+                                            className="w-4 h-4 text-blue-600 focus:ring-blue-500 rounded"
+                                        />
+                                        <span className="text-gray-700">Campo obrigatório</span>
+                                    </label>
+
+                                    <Button type="submit" disabled={createFieldMutation.isPending}>
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        {createFieldMutation.isPending ? 'Criando...' : 'Criar Campo'}
+                                    </Button>
+                                </form>
+                            </CardContent>
+                        </Card>
+
+                        {/* Fields List (Global, agrupado por seção) */}
+                        <div className="space-y-4">
+                            {sections && sections.length > 0 ? (
+                                sections.map((section) =>
+                                    section.fields && section.fields.length > 0 ? (
+                                        <Card key={section.id}>
+                                            <CardHeader>
+                                                <CardTitle className="text-lg font-bold text-gray-900">
+                                                    Campos da Seção: {section.name}
+                                                </CardTitle>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <div className="space-y-2">
+                                                    {section.fields.map((field) => (
+                                                        <div key={field.id} className="flex justify-between items-center bg-gray-50 p-4 rounded">
+                                                            <div>
+                                                                <p className="font-medium text-gray-900">{field.name}</p>
+                                                                <p className="text-sm text-gray-600">
+                                                                    Tipo: {field.type} | Obrigatório: {field.is_required ? 'Sim' : 'Não'} | Ativo: {field.active ? 'Sim' : 'Não'}
+                                                                </p>
+                                                            </div>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => handleDeleteField(field.id, section.id)}
+                                                                disabled={deleteFieldMutation.isPending}
+                                                            >
+                                                                <Trash2 className="w-4 h-4 text-red-600" />
+                                                            </Button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ) : null // Não renderiza se a seção não tiver campos
+                                )
+                            ) : (
+                                <p className="text-gray-500 text-center py-4">Nenhum campo cadastrado ainda.</p>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
-            )}
-        </div>
         </div>
     );
 }
