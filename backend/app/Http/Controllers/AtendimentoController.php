@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\TemplateAtendimento;
 use App\Models\AtendimentoItem;
 use App\Models\TipoAtendimento;
-use App\Models\ListModel;
-use App\Models\ListItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 

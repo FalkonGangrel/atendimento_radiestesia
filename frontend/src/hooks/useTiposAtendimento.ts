@@ -2,17 +2,31 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { TipoAtendimento, TipoAtendimentoFormData } from '@/types';
-import { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 
-// 🔹 LISTAGEM
+// 🔹 LISTAGEM (ENTITY RAW)
 export const useTiposAtendimentoList = () => {
-    return useQuery<TipoAtendimento[], AxiosError>({
-        queryKey: ['tiposAtendimento'],
-        queryFn: async () => {
-            const { data } = await api.get('/tipos-atendimento');
-            return data;
-        },
-    });
+  return useQuery<TipoAtendimento[], AxiosError>({
+    queryKey: ['tiposAtendimento'],
+    queryFn: async () => {
+      const { data } = await api.get<TipoAtendimento[]>('/tipos-atendimento');
+      return data;
+    },
+  });
+};
+
+// 🔹 LISTAGEM PARA SELECT (UI)
+export const useTiposAtendimentoSelect = () => {
+  const query = useTiposAtendimentoList();
+
+  return {
+    ...query,
+    options:
+      query.data?.map((tipo) => ({
+        value: tipo.id.toString(),
+        label: tipo.nome,
+      })) ?? [],
+  };
 };
 
 // 🔹 DETALHE (RAW)

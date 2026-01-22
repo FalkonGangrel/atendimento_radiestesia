@@ -2,11 +2,11 @@ export interface TipoAtendimento {
     id: number;
     nome: string;
     slug: string;
-    descricao: string | null;
+    descricao?: string | null;
     valor: number;
-    duracao_minutos: number | null;
+    duracao_minutos?: number | null;
     ativo: boolean;
-    ordem: number;
-    created_at: string;
-    updated_at: string;
+    ordem?: number;
+    created_at?: string;
+    updated_at?: string;
 }

@@ -1,8 +1,17 @@
-// src/constants/permissions.ts
+export const Permissions = {
+  DASHBOARD_MASTER: 'dashboard.master',
+  USERS_MANAGE: 'users.manage',
 
-export enum Permissions {
-  DASHBOARD_MASTER = "dashboard.master",
-  LISTS_MANAGE = "lists.manage",
-  ATENDIMENTO_CREATE = "atendimento.create",
-  ATENDIMENTO_VIEW_ALL = "atendimento.view_all",
-}
+  TIPOS_ATENDIMENTO: 'tipos-atendimento',
+  TIPOS_ATENDIMENTO_MANAGE: 'tipos-atendimento.manage',
+
+  CAMPOS_MANAGE: 'campos.manage',
+  LISTAS_MANAGE: 'listas.manage',
+} as const
+
+/**
+ * Tipo Permission = union dos valores
+ * 'dashboard.master' | 'users.manage' | ...
+ */
+export type Permission =
+  typeof Permissions[keyof typeof Permissions]

@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\ListModel;
-use App\Models\Lists;
 use App\Models\TipoAtendimento;
 use Illuminate\Auth\Access\HandlesAuthorization;
 

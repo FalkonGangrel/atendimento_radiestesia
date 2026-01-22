@@ -52,22 +52,22 @@ export default function TiposAtendimento() {
                         <Card key={tipo.id} className="shadow-lg hover:shadow-xl transition-shadow duration-200">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-xl font-semibold text-gray-800">
-                                    {tipo.name}
+                                    {tipo.nome}
                                 </CardTitle>
                                 <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    tipo.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                    tipo.ativo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                                 }`}>
-                                    {tipo.active ? 'Ativo' : 'Inativo'}
+                                    {tipo.ativo ? 'Ativo' : 'Inativo'}
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-3">
-                                <p className="text-gray-600 text-sm">{tipo.description}</p>
+                                <p className="text-gray-600 text-sm">{tipo.descricao}</p>
                                 <div className="flex justify-between items-center text-gray-700">
                                     <p>
-                                        <strong className="font-medium">Valor:</strong> {formatCurrency(tipo.value)}
+                                        <strong className="font-medium">Valor:</strong> {formatCurrency(tipo.valor)}
                                     </p>
                                     <p>
-                                        <strong className="font-medium">Duração:</strong> {tipo.duration_minutes} min
+                                        <strong className="font-medium">Duração:</strong> {tipo.duracao_minutos} min
                                     </p>
                                 </div>
                                 <div className="flex gap-2 mt-4 justify-end">
@@ -89,7 +89,7 @@ export default function TiposAtendimento() {
                                         size="sm"
                                         variant="destructive"
                                         onClick={() => handleDelete(tipo.id)}
-                                        disabled={deleteMutation.isPending || !tipo.active} // Desabilita se já inativo ou salvando
+                                        disabled={deleteMutation.isPending || !tipo.ativo} // Desabilita se já inativo ou salvando
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </Button>

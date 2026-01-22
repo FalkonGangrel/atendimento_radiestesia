@@ -1,5 +1,7 @@
 // src/contexts/AuthContext.tsx
-import { createContext } from 'react';
-import type { AuthContextType } from './AuthContext.types';
+import { createContext } from 'react'
+import type { AuthContextType } from './AuthContext.types'
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType>(
+  {} as AuthContextType
+)

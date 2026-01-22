@@ -22,7 +22,7 @@ export default function Login() {
         setIsLoading(true);
 
         try {
-            await login({ email, password });
+            await login(email, password);
             navigate('/');
         } catch (err) {
             if (err instanceof AxiosError) {

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\CustomField;
 use App\Services\CustomFieldService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class CustomFieldController extends Controller
 {

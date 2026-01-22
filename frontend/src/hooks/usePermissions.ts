@@ -6,39 +6,37 @@ import type { UserPermissionsDTO } from '@/types/dtos/UserPermissionsDTO';
 import type { SavePermissionsPayload } from '@/types/payloads/SavePermissionsPayload';
 import type { AxiosError } from 'axios';
 
-/**
- * Busca as permissões de um usuário para um tipo de atendimento
- */
 export function useUserPermissionsForTipo(
   userId?: number,
   tipoId?: number
 ) {
-  return useQuery<UserPermissionsDTO, AxiosError>({
-    queryKey:
-      userId && tipoId
-        ? permissionsQueryKeys.userTipo(userId, tipoId)
-        : permissionsQueryKeys.all,
+  const query = useQuery<UserPermissionsDTO, AxiosError>({
+    queryKey: permissionsQueryKeys.userTipo(userId!, tipoId!),
+    enabled: Boolean(userId && tipoId),
+    staleTime: 1000 * 60,
 
     queryFn: async () => {
-      if (!userId || !tipoId) {
-        throw new Error('User ID e Tipo ID são obrigatórios');
-      }
-
       const { data } = await api.get<UserPermissionsDTO>(
         `/master/tipos-atendimento/${tipoId}/users/${userId}/permissions`
       );
-
       return data;
     },
-
-    enabled: Boolean(userId && tipoId),
-    staleTime: 1000 * 60, // 1 minuto
   });
+
+  return {
+    ...query,
+
+    // ✅ Estado derivado (pronto para UI)
+    hasPermission: query.data?.has_permission ?? false,
+    availableFields: query.data?.available_fields ?? [],
+    availableListModels: query.data?.available_list_models ?? [],
+
+    selectedFieldIds: query.data?.selected_field_ids ?? [],
+    selectedListModelIds: query.data?.selected_list_model_ids ?? [],
+    selectedListItemIds: query.data?.selected_list_item_ids ?? [],
+  };
 }
 
-/**
- * Salva as permissões de um usuário para um tipo de atendimento
- */
 export function useSaveUserPermissions() {
   const queryClient = useQueryClient();
 

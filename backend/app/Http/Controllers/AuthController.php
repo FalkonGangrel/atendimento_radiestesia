@@ -38,6 +38,7 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'permissions' => $user->permissions(),
             ],
             'token' => $token,
         ], 201);
@@ -73,6 +74,7 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'permissions' => $user->permissions(),
             ],
             'token' => $token,
         ]);
@@ -109,12 +111,16 @@ class AuthController extends Controller
      */
     public function me(Request $request)
     {
+
+        $user = $request->user();
+
         return response()->json([
             'user' => [
                 'id' => $request->user()->id,
                 'name' => $request->user()->name,
                 'email' => $request->user()->email,
                 'role' => $request->user()->role,
+                'permissions' => $user->permissions(),
             ],
         ]);
     }

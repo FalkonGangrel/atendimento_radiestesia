@@ -3,8 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\TemplateAtendimento; // Importar o Model correto
-use Illuminate\Support\Facades\DB;
+use App\Models\TemplateAtendimento;
 use Illuminate\Support\Facades\Gate;
 
 class DashboardController extends Controller

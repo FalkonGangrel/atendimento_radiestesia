@@ -1,87 +1,74 @@
-import { useState } from 'react';
-import type { ReactNode } from 'react';
+// src/contexts/AuthProvider.tsx
+import { useEffect, useState } from 'react'
+import { AuthContext } from './AuthContext'
+import type { Permission } from '@/constants/permissions'
+import { api } from '@/lib/api'
+import { setAuthToken, clearAuthToken } from '@/lib/utils'
+import type { AuthUser } from './AuthContext.types'
 
-import { api } from '@/lib/api';
-import { AuthContext } from '@/contexts/AuthContext';
-import type { User } from '@/types';
-import { getAuthToken, setAuthToken, clearAuthToken } from '@/lib/utils';
-import { Permissions } from "@/constants/permissions";
-import { rolePermissions } from "@/constants/rolePermissions";
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<AuthUser | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-interface AuthProviderProps {
-    children: ReactNode;
-}
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const { data } = await api.get('/me')
 
-function getInitialUser(): User | null {
-    if (typeof window === 'undefined') return null;
-
-    const token = getAuthToken();
-    const savedUser = localStorage.getItem('user');
-
-    if (token && savedUser) {
-        try {
-            return JSON.parse(savedUser) as User;
-        } catch {
-            return null;
-        }
+        setUser({
+          ...data.user,
+          permissions: data.user.permissions ?? [],
+        })
+      } catch {
+        clearAuthToken()
+        setUser(null)
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    return null;
-}
+    loadUser()
+  }, [])
 
-export function AuthProvider({ children }: AuthProviderProps) {
-    const [user, setUser] = useState<User | null>(getInitialUser);
-    const [isLoading] = useState(false);
+  function hasPermission(permission: Permission): boolean {
+    if (!user) return false
 
-    function hasPermission(permission: Permissions): boolean {
-        if (!user) return false;
-
-        const permissionsList = rolePermissions[user.role];
-        return permissionsList ? permissionsList.includes(permission) : false;
-    }
-    
-    async function login(credentials: { email: string; password: string }) {
-        const { data } = await api.post('/login', credentials);
-
-        const { token, user: loggedUser } = data;
-
-        setAuthToken(token);
-        localStorage.setItem('user', JSON.stringify(loggedUser));
-        setUser(loggedUser);
+    // master tem acesso total
+    if (user.permissions.includes('*' as Permission)) {
+      return true
     }
 
-    async function register(credentials: {
-        name: string;
-        email: string;
-        password: string;
-    }) {
-        await api.post('/register', credentials);
-    }
+    return user.permissions.includes(permission)
+  }
 
-    async function logout() {
-        try {
-            await api.post('/logout');
-        } catch {
-            // ignora erro do backend
-        }
+  async function login(email: string, password: string) {
+    const { data } = await api.post('/login', { email, password })
 
-        clearAuthToken();
-        localStorage.removeItem('user');
-        setUser(null);
-    }
+    setAuthToken(data.token)
 
-    return (
-        <AuthContext.Provider
-            value={{
-                user,
-                isLoading,
-                login,
-                register,
-                logout,
-                hasPermission,
-            }}
-        >
-            {children}
-        </AuthContext.Provider>
-    );
+    setUser({
+      ...data.user,
+      permissions: data.user.permissions ?? [],
+    })
+  }
+
+  function logout() {
+    clearAuthToken()
+    setUser(null)
+  }
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user,
+        isLoading,
+        hasPermission,
+        login,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  )
 }

@@ -56,6 +56,18 @@ class User extends Authenticatable
         return $this->hasMany(TemplateAtendimento::class, 'user_id');
     }
 
+    public function permissions(): array
+    {
+        $map = config('permissions');
+
+        return $map[$this->role] ?? [];
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        return in_array($permission, $this->permissions(), true);
+    }
+
     public function hasPermissionForTipo(int $tipoId): bool
     {
         if ($this->isMaster()) {

@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts';
 import { api } from '@/lib/api';
+import { Permissions } from '@/constants/permissions';
 import { useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { BarChart3, FileText, List, Plus } from 'lucide-react'; // Importar List para o ícone
@@ -15,27 +16,19 @@ interface DashboardStats {
 }
 
 export default function Dashboard() {
-    const { user } = useAuth();
+    const { user, hasPermission } = useAuth();
     const navigate = useNavigate();
 
     const { data: stats, isLoading, error } = useQuery<DashboardStats, AxiosError>({
         queryKey: ['dashboard-stats'],
-        queryFn: async () => {
-            try {
-                const { data } = await api.get('/atendimentos/stats');
-                return data;
-            } catch (err) {
-                // Em caso de erro, retorna um objeto padrão para evitar que a UI quebre
-                console.error("Erro ao buscar estatísticas do dashboard:", err);
-                // Se for um erro de autenticação, o interceptor do axios já deve redirecionar
-                // Caso contrário, retorna um objeto com zeros
-                return { total: 0, em_andamento: 0, concluidos: 0, cancelados: 0 };
-            }
+        queryFn: async (): Promise<DashboardStats> => {
+            const { data } = await api.get('/atendimentos/stats')
+            return data
         },
-        enabled: !!user?.id, // Só executa a query se o usuário estiver logado
-        staleTime: 5 * 60 * 1000, // Dados considerados "frescos" por 5 minutos
-        cacheTime: 10 * 60 * 1000, // Dados permanecem no cache por 10 minutos
-    });
+        enabled: !!user?.id,
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+    })
 
     if (isLoading) {
         return <div className="text-center py-10 text-gray-500">Carregando dashboard...</div>;

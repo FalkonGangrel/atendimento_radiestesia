@@ -1,8 +1,7 @@
 // src/pages/TipoAtendimentoForm.tsx
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { api } from '@/lib/api';
-import type { TipoAtendimento, TipoAtendimentoFormData } from '@/types';
+import type { TipoAtendimentoFormData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -81,7 +80,7 @@ export default function TipoAtendimentoForm() {
         try {
             await saveTipoMutation.mutateAsync({
                 id: isEditing ? Number(id) : undefined,
-                payload: formData,
+                data: formData,
             });
             navigate('/master/tipos-atendimento');
         } catch (err) {
