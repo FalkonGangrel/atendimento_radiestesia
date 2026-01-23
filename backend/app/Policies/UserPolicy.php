@@ -3,21 +3,9 @@
 namespace App\Policies;
 
 use App\Models\User;
-use Illuminate\Auth\Access\HandlesAuthorization;
 
-class UserPolicy
+class UserPolicy extends BasePolicy
 {
-    use HandlesAuthorization;
-
-    public function before(User $user, string $ability): bool|null
-    {
-        if ($user->isMaster()) {
-            return true;
-        }
-
-        return null; // continua avaliando as regras abaixo
-    }
-
     public function viewAny(User $user): bool
     {
         return false;

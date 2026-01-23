@@ -5,20 +5,9 @@ namespace App\Policies;
 use App\Models\User;
 use App\Models\CustomField;
 use App\Models\TipoAtendimento;
-use Illuminate\Auth\Access\HandlesAuthorization;
 
-class CustomFieldPolicy
+class CustomFieldPolicy extends BasePolicy
 {
-    use HandlesAuthorization;
-
-    /**
-     * Masters podem fazer qualquer coisa
-     */
-    public function before(User $user, string $ability): bool|null
-    {
-        return $user->isMaster() ? true : null;
-    }
-
     public function viewAny(User $user): bool
     {
         return false; // só master passa pelo before

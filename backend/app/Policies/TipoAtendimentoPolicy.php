@@ -5,33 +5,30 @@ namespace App\Policies;
 use App\Models\User;
 use App\Models\TipoAtendimento;
 
-class TipoAtendimentoPolicy
+class TipoAtendimentoPolicy extends BasePolicy
 {
-    /**
-     * Master pode tudo
-     */
-    public function before(User $user, string $ability): ?bool
+    public function viewAny(User $user): bool
     {
-        if ($user->isMaster()) {
-            return true;
-        }
-
-        return null;
+        return true;
     }
 
-    /**
-     * Verificar se o usuário pode visualizar este tipo
-     */
     public function view(User $user, TipoAtendimento $tipo): bool
     {
-        return $user->hasPermissionForTipo($tipo->id);
+        return true;
     }
 
-    /**
-     * Verificar se o usuário pode criar atendimento deste tipo
-     */
-    public function create(User $user, TipoAtendimento $tipo): bool
+    public function create(User $user): bool
     {
-        return $user->hasPermissionForTipo($tipo->id);
+        return $user->isMaster() || $user->isAdmin();
+    }
+
+    public function update(User $user, TipoAtendimento $tipo): bool
+    {
+        return $user->isMaster() || $user->isAdmin();
+    }
+
+    public function delete(User $user, TipoAtendimento $tipo): bool
+    {
+        return $user->isMaster();
     }
 }

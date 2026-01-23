@@ -5,21 +5,9 @@ namespace App\Policies;
 use App\Models\User;
 use App\Models\ListModel;
 use App\Models\TipoAtendimento;
-use Illuminate\Auth\Access\HandlesAuthorization;
 
-class ListPolicy
+class ListPolicy extends BasePolicy
 {
-    use HandlesAuthorization;
-
-    public function before(User $user, string $ability): bool|null
-    {
-        if ($user->role === 'master') {
-            return true;
-        }
-
-        return null;
-    }
-
     public function viewAny(User $user): bool
     {
         return true;

@@ -6,11 +6,17 @@ use App\Models\ListModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class ListController extends Controller
 {
     public function index()
     {
+        // dd(
+        //     auth()->user()->role,
+        //     Gate::allows('viewAny', ListModel::class),
+        // );
+        // exit;
         // Garante que apenas Masters (ou quem tiver viewAny na Policy) podem ver todas as listas
         $this->authorize('viewAny', ListModel::class);
 
