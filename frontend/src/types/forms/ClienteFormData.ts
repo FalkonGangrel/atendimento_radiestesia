@@ -1,8 +1,8 @@
 export interface ClienteFormData {
     name: string;
-    email: string;
-    telefone: string;
-    whatsapp: string;
-    data_nascimento: string;
-    observacoes: string;
+    email: string | null;
+    telefone: string | null;
+    whatsapp: string | null;
+    birth_date: string | null;
+    observacoes: string | null;
 }

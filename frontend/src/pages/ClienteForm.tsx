@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '@/lib/api';
-import type { Cliente, ClienteFormData } from '@/types'; // Importar ClienteFormData
+import type { ClienteFormData } from '@/types'; // Importar ClienteFormData
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -22,27 +22,29 @@ export default function ClienteForm() {
     const [submitError, setSubmitError] = useState<string | null>(null); // Erro específico de submissão
 
     const [formData, setFormData] = useState<ClienteFormData>({
-        name: '', // Alterado de 'nome' para 'name'
+        name: '',
         email: null,
         telefone: null,
         whatsapp: null,
-        data_nascimento: null,
+        birth_date: null,
         observacoes: null,
     });
+
 
     // Preencher formulário ao carregar dados do cliente para edição
     useEffect(() => {
         if (isEditing && clienteData) {
             setFormData({
-                name: clienteData.name || '',
-                email: clienteData.email || null,
-                telefone: clienteData.telefone || null,
-                whatsapp: clienteData.whatsapp || null,
-                data_nascimento: clienteData.data_nascimento || null,
-                observacoes: clienteData.observacoes || null,
+                name: clienteData.name,
+                email: clienteData.email ?? null,
+                telefone: clienteData.telefone ?? null,
+                whatsapp: clienteData.whatsapp ?? null,
+                birth_date: clienteData.birth_date ?? null,
+                observacoes: clienteData.observacoes ?? null,
             });
         }
     }, [isEditing, clienteData]);
+
 
     // Função genérica para lidar com mudanças nos inputs
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -193,14 +195,14 @@ export default function ClienteForm() {
                             </div>
                             {/* Data de Nascimento */}
                             <div>
-                                <label className="block text-sm font-medium mb-2" htmlFor="data_nascimento">
+                                <label className="block text-sm font-medium mb-2" htmlFor="birth_date">
                                     Data de Nascimento
                                 </label>
                                 <Input
-                                    id="data_nascimento"
-                                    name="data_nascimento"
+                                    id="birth_date"
+                                    name="birth_date"
                                     type="date"
-                                    value={formData.data_nascimento || ''}
+                                    value={formData.birth_date || ''}
                                     onChange={handleInputChange}
                                 />
                             </div>

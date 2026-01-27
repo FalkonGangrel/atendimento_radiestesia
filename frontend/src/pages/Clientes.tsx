@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
-import type { Cliente } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Plus, Edit, Eye, Trash2 } from 'lucide-react';
@@ -103,12 +102,28 @@ export default function Clientes() {
                                         </Button>
                                     </div>
                                 </CardHeader>
-                                <CardContent>
+                                <CardContent className="space-y-1">
                                     {cliente.email && (
-                                        <p className="text-sm text-gray-600 mt-1">{cliente.email}</p>
+                                        <p className="text-sm text-gray-600">{cliente.email}</p>
                                     )}
+
                                     {cliente.telefone && (
                                         <p className="text-sm text-gray-600">{cliente.telefone}</p>
+                                    )}
+
+                                    {/* 🔐 Apenas Master vê quem cadastrou */}
+                                    {cliente.created_by && (
+                                        <div className="pt-2 mt-2 border-t">
+                                            <p className="text-xs text-gray-500">
+                                                Cadastrado por:
+                                            </p>
+                                            <p className="text-sm font-medium text-gray-700">
+                                                {cliente.created_by.name}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                {cliente.created_by.email}
+                                            </p>
+                                        </div>
                                     )}
                                 </CardContent>
                             </Card>

@@ -4,72 +4,108 @@ import { api } from '@/lib/api';
 import type { Cliente, ClienteFormData } from '@/types';
 import { AxiosError } from 'axios';
 
-// 🔹 LISTAGEM
+/* =======================
+ * TIPAGEM DA RESPOSTA DA API
+ * ======================= */
+interface ApiCollection<T> {
+    data: T[];
+}
+
+interface ApiItem<T> {
+    data: T;
+}
+
+/* =======================
+ * LISTAGEM
+ * ======================= */
 export const useClientesList = () => {
     return useQuery<Cliente[], AxiosError>({
         queryKey: ['clientes'],
         queryFn: async () => {
-            const { data } = await api.get('/clientes');
-            return data;
+            const { data } = await api.get<ApiCollection<Cliente>>('/clientes');
+            return data.data; // ✅ retorna SOMENTE o array
         },
     });
 };
 
-// 🔹 DETALHE (RAW)
-export const useCliente = (id: number | undefined) => {
+/* =======================
+ * DETALHE
+ * ======================= */
+export const useCliente = (id?: number) => {
     return useQuery<Cliente, AxiosError>({
         queryKey: ['clientes', id],
         queryFn: async () => {
-            const { data } = await api.get(`/clientes/${id}`);
-            return data;
+            const { data } = await api.get<ApiItem<Cliente>>(`/clientes/${id}`);
+            return data.data; // ✅ retorna o cliente puro
         },
         enabled: !!id,
     });
 };
 
-// 🔹 FORMULÁRIO
-export const useClienteForm = (id: number | undefined) => {
+/* =======================
+ * FORMULÁRIO (DTO)
+ * ======================= */
+export const useClienteForm = (id?: number) => {
     return useQuery<ClienteFormData, AxiosError>({
-        queryKey: ['clientes', id],
+        queryKey: ['clientes', id, 'form'],
         queryFn: async () => {
-            const { data } = await api.get(`/clientes/${id}`);
+            const { data } = await api.get<ApiItem<Cliente>>(`/clientes/${id}`);
+
+            const cliente = data.data;
+
             return {
-                name: data.name,
-                email: data.email,
-                telefone: data.telefone,
-                whatsapp: data.whatsapp,
-                data_nascimento: data.data_nascimento,
-                observacoes: data.observacoes,
+                name: cliente.name,
+                email: cliente.email ?? null,
+                telefone: cliente.telefone ?? null,
+                whatsapp: cliente.whatsapp ?? null,
+                birth_date: cliente.birth_date ?? null,
+                observacoes: cliente.observacoes ?? null,
             };
         },
         enabled: !!id,
     });
 };
 
-// 🔹 CREATE / UPDATE
+/* =======================
+ * CREATE / UPDATE
+ * ======================= */
 export const useSaveCliente = () => {
     const queryClient = useQueryClient();
 
-    return useMutation<Cliente, AxiosError, { id?: number; data: ClienteFormData }>({
+    return useMutation<
+        Cliente,
+        AxiosError,
+        { id?: number; data: ClienteFormData }
+    >({
         mutationFn: async ({ id, data }) => {
+            const payload = {
+                ...data,
+                data_nascimento: data.birth_date,
+            };
+
             if (id) {
-                const res = await api.put(`/clientes/${id}`, data);
+                const res = await api.put(`/clientes/${id}`, payload);
                 return res.data;
             }
-            const res = await api.post('/clientes', data);
+
+            const res = await api.post('/clientes', payload);
             return res.data;
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey: ['clientes'] });
 
             if (variables.id) {
-                queryClient.invalidateQueries({ queryKey: ['clientes', variables.id] });
+                queryClient.invalidateQueries({
+                    queryKey: ['clientes', variables.id],
+                });
             }
         },
     });
 };
 
-// 🔹 DELETE
+/* =======================
+ * DELETE
+ * ======================= */
 export const useDeleteCliente = () => {
     const queryClient = useQueryClient();
 

@@ -3,98 +3,86 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
+use App\Http\Resources\ClienteResource;
+use App\Http\Requests\ClienteRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class ClienteController extends Controller
 {
-    /**
-     * Listar clientes do atendente logado
-     */
-    public function index()
+    public function __construct()
     {
-        $userId = Auth::id();
+        $this->authorizeResource(Cliente::class, 'cliente');
+    }
 
-        $clientes = Cliente::where('user_id', $userId)
+    /**
+     * Listagem de clientes
+     * - Master: todos + quem cadastrou
+     * - Outros: apenas os próprios
+     */
+    public function index(Request $request)
+    {
+        $user = auth()->user();
+
+        $query = Cliente::query()
             ->where('ativo', true)
-            ->orderBy('nome')
-            ->get();
+            ->orderBy('nome');
 
-        return response()->json($clientes);
+        if ($user->isMaster()) {
+            $query->with('atendente:id,name,email');
+
+            if ($request->filled('user_id')) {
+                $query->where('user_id', $request->user_id);
+            }
+        } else {
+            $query->where('user_id', $user->id);
+        }
+
+        return ClienteResource::collection($query->get());
     }
 
+
+
     /**
-     * Mostrar um cliente específico
+     * Visualizar cliente
      */
-    public function show($id)
+    public function show(Cliente $cliente)
     {
-        $userId = Auth::id();
+        if (auth()->user()->isMaster()) {
+            $cliente->load('atendente:id,name,email');
+        }
 
-        $cliente = Cliente::where('id', $id)
-            ->where('user_id', $userId)
-            ->firstOrFail();
-
-        return response()->json($cliente);
+        return new ClienteResource($cliente);
     }
 
+
     /**
-     * Criar novo cliente
+     * Criar cliente
      */
-    public function store(Request $request)
+    public function store(ClienteRequest $request)
     {
-        $validated = $request->validate([
-            'nome' => 'required|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'telefone' => 'nullable|string|max:20',
-            'whatsapp' => 'nullable|string|max:20',
-            'data_nascimento' => 'nullable|date',
-            'observacoes' => 'nullable|string',
+        $cliente = Cliente::create([
+            ...$request->validated(),
+            'created_by' => auth()->id(),
         ]);
 
-        $validated['user_id'] = Auth::id();
-
-        $cliente = Cliente::create($validated);
-
-        return response()->json($cliente, 201);
+        return new ClienteResource($cliente);
     }
 
     /**
      * Atualizar cliente
      */
-    public function update(Request $request, $id)
+    public function update(ClienteRequest $request, Cliente $cliente)
     {
-        $userId = Auth::id();
+        $cliente->update($request->validated());
 
-        $cliente = Cliente::where('id', $id)
-            ->where('user_id', $userId)
-            ->firstOrFail();
-
-        $validated = $request->validate([
-            'nome' => 'sometimes|required|string|max:255',
-            'email' => 'nullable|email|max:255',
-            'telefone' => 'nullable|string|max:20',
-            'whatsapp' => 'nullable|string|max:20',
-            'data_nascimento' => 'nullable|date',
-            'observacoes' => 'nullable|string',
-            'ativo' => 'sometimes|boolean',
-        ]);
-
-        $cliente->update($validated);
-
-        return response()->json($cliente);
+        return new ClienteResource($cliente->fresh());
     }
 
     /**
-     * Deletar cliente (soft delete - marca como inativo)
+     * Desativar cliente
      */
-    public function destroy($id)
+    public function destroy(Cliente $cliente)
     {
-        $userId = Auth::id();
-
-        $cliente = Cliente::where('id', $id)
-            ->where('user_id', $userId)
-            ->firstOrFail();
-
         $cliente->update(['ativo' => false]);
 
         return response()->json(['message' => 'Cliente desativado com sucesso']);

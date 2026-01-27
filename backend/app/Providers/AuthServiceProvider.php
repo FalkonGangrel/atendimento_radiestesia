@@ -4,12 +4,18 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+
+//Models
+use App\Models\Cliente;
 use App\Models\CustomField;
 use App\Models\FieldSection;
 use App\Models\ListModel;
 use App\Models\ListItem;
 use App\Models\User;
+
+//Policies
 use App\Models\TipoAtendimento;
+use App\Policies\ClientePolicy;
 use App\Policies\CustomFieldPolicy;
 use App\Policies\FieldSectionPolicy;
 use App\Policies\ListPolicy;
@@ -23,6 +29,7 @@ class AuthServiceProvider extends ServiceProvider
      * Register services.
      */
     protected $policies = [
+        Cliente::class => ClientePolicy::class,
         CustomField::class => CustomFieldPolicy::class,
         FieldSection::class => FieldSectionPolicy::class,
         ListModel::class => ListPolicy::class,

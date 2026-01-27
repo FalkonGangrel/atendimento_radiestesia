@@ -11,7 +11,6 @@ class Cliente extends Model
     protected $table = 'clientes';
 
     protected $fillable = [
-        'user_id',
         'nome',
         'email',
         'telefone',
@@ -19,6 +18,7 @@ class Cliente extends Model
         'data_nascimento',
         'observacoes',
         'ativo',
+        'created_by',
     ];
 
     protected $casts = [
@@ -33,6 +33,6 @@ class Cliente extends Model
 
     public function atendimentos(): HasMany
     {
-        return $this->hasMany(Atendimento::class, 'cliente_id');
+        return $this->hasMany(TemplateAtendimento::class, 'cliente_id');
     }
 }
