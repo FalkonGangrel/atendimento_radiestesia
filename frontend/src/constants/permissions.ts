@@ -18,12 +18,16 @@ export const Permissions = {
   TIPOS_ATENDIMENTO: 'tipos-atendimento',
   TIPOS_ATENDIMENTO_MANAGE: 'tipos-atendimento.manage',
   
-  USERS_MANAGE: 'users.manage',
+  USUARIOS_MANAGE: 'usuarios.manage',
+  USUARIOS_VIEW: 'usuarios.view',
+  USUARIOS_CREATE: 'usuarios.create',
+  USUARIOS_UPDATE: 'usuarios.update',
+  USUARIOS_DELETE: 'usuarios.delete',
 } as const
 
 /**
  * Tipo Permission = union dos valores
- * 'dashboard.master' | 'users.manage' | ...
+ * 'dashboard.master' | 'usuarios.manage' | ...
  */
 export type Permission =
   typeof Permissions[keyof typeof Permissions]

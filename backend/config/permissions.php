@@ -17,7 +17,11 @@ return [
 
         'tipos-atendimento.manage',
 
-        'users.manage',
+        'usuarios.manage',
+        'usuarios.create',
+        'usuarios.update',
+        'usuarios.delete',
+        'usuarios.view',
     ],
 
     'admin' => [

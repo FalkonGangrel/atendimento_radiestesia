@@ -1,14 +1,14 @@
-import type { ElementType } from 'react'
 import {
-  LayoutDashboard,
-  ClipboardList,
-  PlusCircle,
-  Users,
-  DollarSign,
-  Settings,
-  ListTodo,
   BarChart,
+  ClipboardList,
+  DollarSign,
+  LayoutDashboard,
+  ListTodo,
+  PlusCircle,
+  Settings,
+  Users,
 } from 'lucide-react'
+import type { ElementType } from 'react'
 
 import { type Permission, Permissions } from '@/constants/permissions'
 
@@ -56,7 +56,7 @@ export const menuConfig: readonly MenuSection[] = [
         label: 'Usuários',
         path: '/master/usuarios',
         icon: Users,
-        permission: Permissions.USERS_MANAGE,
+        permission: Permissions.USUARIOS_MANAGE,
       },
       {
         label: 'Tipos de Atendimento',
