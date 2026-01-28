@@ -3,16 +3,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { usersQueryKeys } from '@/lib/queryKeys/users';
 import type { User } from '@/types/entities/User';
+import type { UserListItem } from '@/types/entities/UserListItem';
 import type { AxiosError } from 'axios';
 
 /**
  * Lista todos os usuários
  */
 export function useUsersList() {
-  return useQuery<User[], AxiosError>({
+  return useQuery<UserListItem[], AxiosError>({
     queryKey: usersQueryKeys.all,
     queryFn: async () => {
-      const { data } = await api.get<User[]>('/users');
+      const { data } = await api.get<UserListItem[]>('/users');
       return data;
     },
     staleTime: 1000 * 60 * 2, // 2 minutos

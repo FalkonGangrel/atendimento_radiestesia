@@ -5,7 +5,7 @@ import {
   useUpdateUser,
   useDeleteUser,
 } from '@/hooks/useUsers'
-import type { User } from '@/types'
+import type { UserListItem } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -32,9 +32,9 @@ export default function Usuarios() {
   const deleteUserMutation = useDeleteUser()
 
   const [editingId, setEditingId] = useState<number | null>(null)
-  const [editingData, setEditingData] = useState<Partial<User> | null>(null)
+  const [editingData, setEditingData] = useState<Partial<UserListItem> | null>(null)
 
-  const handleEdit = (user: User) => {
+  const handleEdit = (user: UserListItem) => {
     setEditingId(user.id)
     setEditingData({
       name: user.name,
@@ -48,7 +48,7 @@ export default function Usuarios() {
     setEditingData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleRoleChange = (value: User['role']) => {
+  const handleRoleChange = (value: UserListItem['role']) => {
     setEditingData(prev => ({ ...prev, role: value }))
   }
 

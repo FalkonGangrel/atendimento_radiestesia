@@ -8,7 +8,7 @@ export * from './entities/ListItem';
 export * from './entities/ListModel';
 export * from './entities/TipoAtendimento';
 export * from './entities/User';
-
+export * from './entities/UserListItem';
 // DTOS
 export * from './dtos/AtendimentoDetailDTO';
 export * from './dtos/AtendimentoListDTO';
