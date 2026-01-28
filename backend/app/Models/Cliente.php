@@ -18,7 +18,7 @@ class Cliente extends Model
         'data_nascimento',
         'observacoes',
         'ativo',
-        'created_by',
+        'user_id',
     ];
 
     protected $casts = [

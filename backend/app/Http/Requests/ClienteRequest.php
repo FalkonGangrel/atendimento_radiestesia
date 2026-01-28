@@ -3,25 +3,26 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ClienteRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // controle de acesso vem depois (Policies)
+        return true;
     }
 
     public function rules(): array
     {
-        $clienteId = $this->route('cliente');
+        $cliente = $this->route('cliente');
 
         return [
-            'nome' => ['required', 'string', 'min:3', 'max:255'],
+            'name' => ['required', 'string', 'min:3', 'max:255'],
             'email' => [
-                'nullable',
+                'required',
                 'email',
                 'max:255',
-                'unique:clientes,email,' . $clienteId,
+                Rule::unique('clientes', 'email')->ignore($cliente),
             ],
             'telefone' => ['required', 'string', 'min:8', 'max:20'],
             'whatsapp' => ['nullable', 'string', 'min:8', 'max:20'],
@@ -34,11 +35,20 @@ class ClienteRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'nome.required' => 'O nome é obrigatório',
-            'nome.min' => 'O nome deve ter no mínimo 3 caracteres',
+            'name.required' => 'O nome é obrigatório',
+            'name.min' => 'O nome deve ter no mínimo 3 caracteres',
             'email.email' => 'Informe um e-mail válido',
             'email.unique' => 'Este e-mail já está cadastrado',
             'telefone.required' => 'O telefone é obrigatório',
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'name' => 'nome',
+            'telefone' => 'telefone',
+            'data_nascimento' => 'data de nascimento',
         ];
     }
 }

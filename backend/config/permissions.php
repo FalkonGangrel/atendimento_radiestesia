@@ -2,11 +2,22 @@
 
 return [
     'master' => [
-        'dashboard.master',
-        'users.manage',
-        'tipos-atendimento.manage',
+
         'campos.manage',
+
+        'clientes.create',
+        'clientes.update',
+        'clientes.delete',
+        'clientes.view',
+        'clientes.view_owner',
+
+        'dashboard.master',
+
         'listas.manage',
+
+        'tipos-atendimento.manage',
+
+        'users.manage',
     ],
 
     'admin' => [
@@ -14,5 +25,10 @@ return [
         'tipos-atendimento.manage',
     ],
 
-    'atendente' => [],
+    'atendente' => [
+        'clientes.create',
+        'clientes.update',
+        'clientes.delete',
+        'clientes.view',
+    ],
 ];

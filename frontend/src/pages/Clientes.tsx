@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
+import { useAuth } from '@/contexts/'
+import { Permissions } from '@/constants/permissions';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Plus, Edit, Eye, Trash2 } from 'lucide-react';
@@ -8,6 +10,7 @@ import { useClientesList } from '@/hooks/useClientes'; // Importar o novo hook
 
 export default function Clientes() {
     const navigate = useNavigate();
+    const { hasPermission } = useAuth()
     const { data: clientes, isLoading, isError, error, refetch } = useClientesList(); // Usando useClientesList
     const [deleteError, setDeleteError] = useState<string | null>(null); // Renomeado para evitar conflito
 
@@ -52,10 +55,12 @@ export default function Clientes() {
                         <h1 className="text-3xl font-bold text-gray-900">Clientes</h1>
                         <p className="text-gray-600 mt-2">Gerencie seus clientes aqui.</p>
                     </div>
+                    {hasPermission(Permissions.CLIENTES_CREATE) && (
                     <Button onClick={() => navigate('/clientes/novo')}>
                         <Plus className="w-4 h-4 mr-2" />
                         Novo Cliente
                     </Button>
+                    )}
                 </div>
 
                 {/* Mensagem de Erro de Exclusão */}
@@ -77,30 +82,38 @@ export default function Clientes() {
                                             <span className="text-xs font-normal text-red-500 mt-1">Inativo</span>
                                         )}
                                     </CardTitle>
-                                    <div className="flex gap-2">
+                                <div className="flex gap-2">
+                                    {hasPermission(Permissions.CLIENTES_VIEW) && (
                                         <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => navigate(`/clientes/${cliente.id}`)}
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => navigate(`/clientes/${cliente.id}`)}
                                         >
-                                            <Eye className="w-4 h-4" />
+                                        <Eye className="w-4 h-4" />
                                         </Button>
+                                    )}
+
+                                    {hasPermission(Permissions.CLIENTES_UPDATE) && (
                                         <Button
-                                            size="sm"
-                                            variant="outline"
-                                            onClick={() => navigate(`/clientes/${cliente.id}/editar`)}
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => navigate(`/clientes/${cliente.id}/editar`)}
                                         >
-                                            <Edit className="w-4 h-4" />
+                                        <Edit className="w-4 h-4" />
                                         </Button>
+                                    )}
+
+                                    {hasPermission(Permissions.CLIENTES_DELETE) && (
                                         <Button
-                                            size="sm"
-                                            variant="destructive"
-                                            onClick={() => handleDelete(cliente.id)}
-                                            disabled={!cliente.active} // Desabilita o botão se já estiver inativo
+                                        size="sm"
+                                        variant="destructive"
+                                        onClick={() => handleDelete(cliente.id)}
+                                        disabled={!cliente.active}
                                         >
-                                            <Trash2 className="w-4 h-4" />
+                                        <Trash2 className="w-4 h-4" />
                                         </Button>
-                                    </div>
+                                    )}
+                                </div>
                                 </CardHeader>
                                 <CardContent className="space-y-1">
                                     {cliente.email && (
@@ -112,7 +125,7 @@ export default function Clientes() {
                                     )}
 
                                     {/* 🔐 Apenas Master vê quem cadastrou */}
-                                    {cliente.created_by && (
+                                    {hasPermission(Permissions.CLIENTES_VIEW_OWNER) && cliente.created_by && (
                                         <div className="pt-2 mt-2 border-t">
                                             <p className="text-xs text-gray-500">
                                                 Cadastrado por:

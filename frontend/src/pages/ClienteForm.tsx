@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '@/lib/api';
+import { useAuth } from '@/contexts/'
+import { Permissions } from '@/constants/permissions';
 import type { ClienteFormData } from '@/types'; // Importar ClienteFormData
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +14,7 @@ import { AxiosError } from 'axios';
 
 export default function ClienteForm() {
     const navigate = useNavigate();
+    const { hasPermission } = useAuth()
     const { id } = useParams<{ id: string }>();
     const isEditing = Boolean(id);
 
@@ -104,11 +107,25 @@ export default function ClienteForm() {
         );
     }
 
+    if (
+        (!isEditing && !hasPermission(Permissions.CLIENTES_CREATE)) ||
+        (isEditing && !hasPermission(Permissions.CLIENTES_UPDATE))
+        ) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+            <div className="text-red-500">
+                Você não tem permissão para acessar esta página.
+            </div>
+            </div>
+        )
+    }
+
     return (
         <div className="min-h-screen bg-gray-50 p-6">
             <div className="max-w-3xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
+                    {hasPermission(Permissions.CLIENTES_VIEW) && (
                     <Button
                         variant="ghost"
                         onClick={() => navigate('/clientes')}
@@ -117,6 +134,7 @@ export default function ClienteForm() {
                         <ArrowLeft className="w-4 h-4 mr-2" />
                         Voltar
                     </Button>
+                    )}
                     <h1 className="text-3xl font-bold text-gray-900">
                         {isEditing ? `Editar Cliente: ${clienteData?.name}` : 'Novo Cliente'}
                     </h1>
@@ -225,20 +243,25 @@ export default function ClienteForm() {
 
                     {/* Botões de Ação */}
                     <div className="mt-6 flex gap-4">
-                        <Button type="submit" disabled={isSaving}>
-                            {isSaving
+                        {((!isEditing && hasPermission(Permissions.CLIENTES_CREATE)) ||
+                        (isEditing && hasPermission(Permissions.CLIENTES_UPDATE))) && (
+                            <Button type="submit" disabled={isSaving}>
+                                {isSaving
                                 ? 'Salvando...'
                                 : isEditing
                                     ? 'Atualizar Cliente'
                                     : 'Cadastrar Cliente'}
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => navigate('/clientes')}
-                        >
-                            Cancelar
-                        </Button>
+                            </Button>
+                        )}
+                        {(hasPermission(Permissions.CLIENTES_VIEW)) && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => navigate('/clientes')}
+                            >
+                                Cancelar
+                            </Button>
+                        )}
                     </div>
                 </form>
             </div>

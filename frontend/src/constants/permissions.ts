@@ -1,9 +1,11 @@
 export const Permissions = {
   CAMPOS_MANAGE: 'campos.manage',
   
-  CLIENTE_CREATE: 'cliente.create',
-  CLIENTE_UPDATE: 'cliente.update',
-  CLIENTE_DELETE: 'cliente.delete',
+  CLIENTES_VIEW: 'clientes.view',
+  CLIENTES_CREATE: 'clientes.create',
+  CLIENTES_UPDATE: 'clientes.update',
+  CLIENTES_DELETE: 'clientes.delete',
+  CLIENTES_VIEW_OWNER: 'clientes.view_owner',
   
   DASHBOARD_MASTER: 'dashboard.master',
   

@@ -60,9 +60,17 @@ class ClienteController extends Controller
      */
     public function store(ClienteRequest $request)
     {
+        $data = $request->validated();
+
         $cliente = Cliente::create([
-            ...$request->validated(),
-            'created_by' => auth()->id(),
+            'nome' => $data['name'],
+            'email' => $data['email'] ?? null,
+            'telefone' => $data['telefone'],
+            'whatsapp' => $data['whatsapp'] ?? null,
+            'data_nascimento' => $data['data_nascimento'] ?? null,
+            'observacoes' => $data['observacoes'] ?? null,
+            'ativo' => true,
+            'user_id' => auth()->id(),
         ]);
 
         return new ClienteResource($cliente);
@@ -73,7 +81,17 @@ class ClienteController extends Controller
      */
     public function update(ClienteRequest $request, Cliente $cliente)
     {
-        $cliente->update($request->validated());
+        $data = $request->validated();
+
+        $cliente->update([
+            'nome' => $data['name'] ?? $cliente->nome,
+            'email' => $data['email'] ?? null,
+            'telefone' => $data['telefone'],
+            'whatsapp' => $data['whatsapp'] ?? null,
+            'data_nascimento' => $data['data_nascimento'] ?? null,
+            'observacoes' => $data['observacoes'] ?? null,
+            'ativo' => $data['ativo'] ?? $cliente->ativo,
+        ]);
 
         return new ClienteResource($cliente->fresh());
     }
