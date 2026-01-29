@@ -67,7 +67,7 @@ class ClienteController extends Controller
             'email' => $data['email'] ?? null,
             'telefone' => $data['telefone'],
             'whatsapp' => $data['whatsapp'] ?? null,
-            'data_nascimento' => $data['data_nascimento'] ?? null,
+            'data_nascimento' => $data['birth_date'] ?? null,
             'observacoes' => $data['observacoes'] ?? null,
             'user_id' => auth()->id(),
         ]);
@@ -87,7 +87,7 @@ class ClienteController extends Controller
             'email' => $data['email'] ?? null,
             'telefone' => $data['telefone'],
             'whatsapp' => $data['whatsapp'] ?? null,
-            'data_nascimento' => $data['data_nascimento'] ?? null,
+            'data_nascimento' => $data['birth_date'] ?? null,
             'observacoes' => $data['observacoes'] ?? null,
         ]);
 

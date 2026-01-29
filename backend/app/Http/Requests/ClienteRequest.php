@@ -26,7 +26,7 @@ class ClienteRequest extends FormRequest
             ],
             'telefone' => ['nullable', 'string', 'min:8', 'max:20'],
             'whatsapp' => ['nullable', 'string', 'min:8', 'max:20'],
-            'data_nascimento' => ['nullable', 'date'],
+            'birth_date' => ['nullable', 'date'],
             'observacoes' => ['nullable', 'string'],
         ];
     }

@@ -6,7 +6,7 @@ export interface Cliente {
     whatsapp?: string | null;
     birth_date?: string | null;
     observacoes?: string | null;
-    active: boolean;
+    deleted_at: string | null;
 
     created_by?: {
         id: number;

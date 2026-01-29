@@ -62,6 +62,13 @@ export default function ClienteDetail() {
     }
   }
 
+  function formatDateBR(date: string) {
+      if (!date) return '';
+      const [year, month, day] = date.split('-');
+      return `${day}/${month}/${year}`;
+  }
+
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -174,7 +181,7 @@ export default function ClienteDetail() {
                       Data de Nascimento
                     </p>
                     <p className="font-medium">
-                      {new Date(cliente.birth_date).toLocaleDateString('pt-BR')}
+                      {formatDateBR(cliente.birth_date)}
                     </p>
                   </div>
                 </div>

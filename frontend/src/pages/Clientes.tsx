@@ -1,31 +1,29 @@
 import { useNavigate } from 'react-router-dom';
 import { api } from '@/lib/api';
-import { useAuth } from '@/contexts/'
+import { useAuth } from '@/contexts';
 import { Permissions } from '@/constants/permissions';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Plus, Edit, Eye, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { useClientesList } from '@/hooks/useClientes'; // Importar o novo hook
+import { useClientesList } from '@/hooks/useClientes';
 
 export default function Clientes() {
     const navigate = useNavigate();
-    const { hasPermission } = useAuth()
-    const { data: clientes, isLoading, isError, error, refetch } = useClientesList(); // Usando useClientesList
-    const [deleteError, setDeleteError] = useState<string | null>(null); // Renomeado para evitar conflito
+    const { hasPermission } = useAuth();
+    const { data: clientes, isLoading, isError, error, refetch } = useClientesList();
+    const [deleteError, setDeleteError] = useState<string | null>(null);
 
     const handleDelete = async (id: number) => {
         if (!confirm('Tem certeza que deseja desativar este cliente?')) return;
-        setDeleteError(null); // Limpa erros anteriores
+
+        setDeleteError(null);
+
         try {
             await api.delete(`/clientes/${id}`);
-            refetch(); // Refetch para atualizar a lista
+            refetch();
         } catch (err) {
-            if (err instanceof Error) { // AxiosError é uma subclasse de Error
-                setDeleteError(err.message || 'Erro ao desativar cliente');
-            } else {
-                setDeleteError('Erro ao desativar cliente');
-            }
+            setDeleteError('Erro ao desativar cliente');
             console.error(err);
         }
     };
@@ -41,7 +39,9 @@ export default function Clientes() {
     if (isError) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="text-red-500">Erro ao carregar clientes: {error?.message}</div>
+                <div className="text-red-500">
+                    Erro ao carregar clientes: {error?.message}
+                </div>
             </div>
         );
     }
@@ -55,97 +55,127 @@ export default function Clientes() {
                         <h1 className="text-3xl font-bold text-gray-900">Clientes</h1>
                         <p className="text-gray-600 mt-2">Gerencie seus clientes aqui.</p>
                     </div>
+
                     {hasPermission(Permissions.CLIENTES_CREATE) && (
-                    <Button onClick={() => navigate('/clientes/novo')}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Novo Cliente
-                    </Button>
+                        <Button onClick={() => navigate('/clientes/novo')}>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Novo Cliente
+                        </Button>
                     )}
                 </div>
 
-                {/* Mensagem de Erro de Exclusão */}
+                {/* Erro ao deletar */}
                 {deleteError && (
                     <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
                         {deleteError}
                     </div>
                 )}
 
-                {/* Lista de Clientes */}
+                {/* Lista */}
                 {clientes && clientes.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {clientes.map((cliente) => (
-                            <Card key={cliente.id} className={`transition-all duration-200 ${!cliente.active ? 'opacity-60 border-dashed border-gray-300' : ''}`}>
-                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                    <CardTitle className="text-lg font-semibold flex flex-col">
-                                        <span className="text-gray-900">{cliente.name}</span> {/* Usando cliente.name */}
-                                        {!cliente.active && (
-                                            <span className="text-xs font-normal text-red-500 mt-1">Inativo</span>
-                                        )}
-                                    </CardTitle>
-                                <div className="flex gap-2">
-                                    {hasPermission(Permissions.CLIENTES_VIEW) && (
-                                        <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => navigate(`/clientes/${cliente.id}`)}
-                                        >
-                                        <Eye className="w-4 h-4" />
-                                        </Button>
-                                    )}
+                        {clientes.map(cliente => {
+                            const isActive = !cliente.deleted_at;
 
-                                    {hasPermission(Permissions.CLIENTES_UPDATE) && (
-                                        <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => navigate(`/clientes/${cliente.id}/editar`)}
-                                        >
-                                        <Edit className="w-4 h-4" />
-                                        </Button>
-                                    )}
+                            return (
+                                <Card
+                                    key={cliente.id}
+                                    className={`transition-all ${
+                                        !isActive
+                                            ? 'opacity-60 border-dashed border-gray-300'
+                                            : ''
+                                    }`}
+                                >
+                                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                        <CardTitle className="text-lg font-semibold flex flex-col">
+                                            <span className="text-gray-900">
+                                                {cliente.name}
+                                            </span>
 
-                                    {hasPermission(Permissions.CLIENTES_DELETE) && (
-                                        <Button
-                                        size="sm"
-                                        variant="destructive"
-                                        onClick={() => handleDelete(cliente.id)}
-                                        disabled={!cliente.active}
-                                        >
-                                        <Trash2 className="w-4 h-4" />
-                                        </Button>
-                                    )}
-                                </div>
-                                </CardHeader>
-                                <CardContent className="space-y-1">
-                                    {cliente.email && (
-                                        <p className="text-sm text-gray-600">{cliente.email}</p>
-                                    )}
+                                            {!isActive && (
+                                                <span className="text-xs text-red-500 mt-1">
+                                                    Inativo
+                                                </span>
+                                            )}
+                                        </CardTitle>
 
-                                    {cliente.telefone && (
-                                        <p className="text-sm text-gray-600">{cliente.telefone}</p>
-                                    )}
+                                        <div className="flex gap-2">
+                                            {hasPermission(Permissions.CLIENTES_VIEW) && (
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() =>
+                                                        navigate(`/clientes/${cliente.id}`)
+                                                    }
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </Button>
+                                            )}
 
-                                    {/* 🔐 Apenas Master vê quem cadastrou */}
-                                    {hasPermission(Permissions.CLIENTES_VIEW_OWNER) && cliente.created_by && (
-                                        <div className="pt-2 mt-2 border-t">
-                                            <p className="text-xs text-gray-500">
-                                                Cadastrado por:
-                                            </p>
-                                            <p className="text-sm font-medium text-gray-700">
-                                                {cliente.created_by.name}
-                                            </p>
-                                            <p className="text-xs text-gray-500">
-                                                {cliente.created_by.email}
-                                            </p>
+                                            {hasPermission(Permissions.CLIENTES_UPDATE) && (
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() =>
+                                                        navigate(`/clientes/${cliente.id}/editar`)
+                                                    }
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </Button>
+                                            )}
+
+                                            {hasPermission(Permissions.CLIENTES_DELETE) && (
+                                                <Button
+                                                    size="sm"
+                                                    variant="destructive"
+                                                    onClick={() => handleDelete(cliente.id)}
+                                                    disabled={!isActive}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            )}
                                         </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        ))}
+                                    </CardHeader>
+
+                                    <CardContent className="space-y-1">
+                                        {cliente.email && (
+                                            <p className="text-sm text-gray-600">
+                                                {cliente.email}
+                                            </p>
+                                        )}
+
+                                        {cliente.telefone && (
+                                            <p className="text-sm text-gray-600">
+                                                {cliente.telefone}
+                                            </p>
+                                        )}
+
+                                        {/* 🔐 Apenas quem pode ver o dono */}
+                                        {hasPermission(Permissions.CLIENTES_VIEW_OWNER) &&
+                                            cliente.created_by && (
+                                                <div className="pt-2 mt-2 border-t">
+                                                    <p className="text-xs text-gray-500">
+                                                        Cadastrado por:
+                                                    </p>
+                                                    <p className="text-sm font-medium text-gray-700">
+                                                        {cliente.created_by.name}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">
+                                                        {cliente.created_by.email}
+                                                    </p>
+                                                </div>
+                                            )}
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
                     </div>
                 ) : (
                     <Card>
                         <CardContent className="text-center py-12">
-                            <p className="text-gray-500 mb-4">Nenhum cliente cadastrado ainda.</p>
+                            <p className="text-gray-500 mb-4">
+                                Nenhum cliente cadastrado ainda.
+                            </p>
                             <Button onClick={() => navigate('/clientes/novo')}>
                                 <Plus className="w-4 h-4 mr-2" />
                                 Cadastrar Primeiro Cliente
