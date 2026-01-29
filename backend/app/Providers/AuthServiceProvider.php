@@ -11,17 +11,17 @@ use App\Models\CustomField;
 use App\Models\FieldSection;
 use App\Models\ListModel;
 use App\Models\ListItem;
+use App\Models\TipoAtendimento;
 use App\Models\User;
 
 //Policies
-use App\Models\TipoAtendimento;
 use App\Policies\ClientePolicy;
 use App\Policies\CustomFieldPolicy;
 use App\Policies\FieldSectionPolicy;
 use App\Policies\ListPolicy;
 use App\Policies\ListItemPolicy;
-use App\Policies\UserPolicy;
 use App\Policies\TipoAtendimentoPolicy;
+use App\Policies\UserPolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {

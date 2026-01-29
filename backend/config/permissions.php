@@ -1,38 +1,64 @@
 <?php
 
 return [
-    'master' => [
 
-        'campos.manage',
+    /*
+    |--------------------------------------------------------------------------
+    | MASTER
+    |--------------------------------------------------------------------------
+    | Master é tratado no BasePolicy (before).
+    | Não precisa listar permissões aqui.
+    */
+    'master' => [],
 
-        'clientes.create',
-        'clientes.update',
-        'clientes.delete',
-        'clientes.view',
-        'clientes.view_owner',
-
-        'dashboard.master',
-
-        'listas.manage',
-
-        'tipos-atendimento.manage',
-
-        'usuarios.manage',
-        'usuarios.create',
-        'usuarios.update',
-        'usuarios.delete',
-        'usuarios.view',
-    ],
-
+    /*
+    |--------------------------------------------------------------------------
+    | ADMIN
+    |--------------------------------------------------------------------------
+    | Perfil administrativo sem poder absoluto
+    */
     'admin' => [
-        'dashboard.master',
-        'tipos-atendimento.manage',
+
+        // Dashboard
+        'dashboard.view',
+
+        // Tipos de Atendimento
+        'tipos-atendimento.view',
+        'tipos-atendimento.create',
+        'tipos-atendimento.update',
+
+        // Listas
+        'listas.view',
+        'listas.create',
+        'listas.update',
+
+        // Clientes
+        'clientes.view',
+        'clientes.create',
+        'clientes.update',
+
+        // Usuários (sem role / delete)
+        'usuarios.view',
+        'usuarios.update',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | ATENDENTE
+    |--------------------------------------------------------------------------
+    | Usuário operacional
+    */
     'atendente' => [
+
+        // Clientes
+        'clientes.view',
         'clientes.create',
         'clientes.update',
         'clientes.delete',
-        'clientes.view',
+
+        // Atendimentos (se aplicável depois)
+        'atendimentos.view',
+        'atendimentos.create',
+        'atendimentos.update',
     ],
 ];

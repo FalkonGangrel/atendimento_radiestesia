@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import {
-  useUsersList,
-  useUpdateUser,
-  useDeleteUser,
-} from '@/hooks/useUsers'
+
+import { useUsersList, useUpdateUser, useDeleteUser, useRestoreUser } from '@/hooks/useUsers'
+import { useAuth } from '@/contexts/'
+
 import type { UserListItem } from '@/types'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -15,24 +15,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Edit,
-  Trash2,
-  Save,
-  XCircle,
-  Shield,
-  Plus,
-} from 'lucide-react'
+
+import { Edit, Trash2, Save, XCircle, Shield, Plus, RotateCcw } from 'lucide-react'
 
 export default function Usuarios() {
   const navigate = useNavigate()
+  const { user: authUser } = useAuth()
 
   const { data: users, isLoading, isError, error } = useUsersList()
-  const updateUserMutation = useUpdateUser()
-  const deleteUserMutation = useDeleteUser()
+  const updateUser = useUpdateUser()
+  const deleteUser = useDeleteUser()
+  const restoreUser = useRestoreUser()
 
   const [editingId, setEditingId] = useState<number | null>(null)
-  const [editingData, setEditingData] = useState<Partial<UserListItem> | null>(null)
+  const [editingData, setEditingData] = useState<Partial<UserListItem>>({})
 
   const handleEdit = (user: UserListItem) => {
     setEditingId(user.id)
@@ -43,213 +39,159 @@ export default function Usuarios() {
     })
   }
 
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setEditingData(prev => ({ ...prev, [name]: value }))
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditingData(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
-  const handleRoleChange = (value: UserListItem['role']) => {
-    setEditingData(prev => ({ ...prev, role: value }))
+  const handleRoleChange = (role: UserListItem['role']) => {
+    setEditingData(prev => ({ ...prev, role }))
   }
 
-  const handleSaveEdit = async () => {
-    if (!editingId || !editingData) return
+  const handleSave = async () => {
+    if (!editingId) return
 
-    try {
-      await updateUserMutation.mutateAsync({
-        id: editingId,
-        ...editingData,
-      })
-      setEditingId(null)
-      setEditingData(null)
-    } catch (err) {
-      console.error('Erro ao salvar edição:', err)
-    }
-  }
+    await updateUser.mutateAsync({
+      id: editingId,
+      ...editingData,
+    })
 
-  const handleCancelEdit = () => {
     setEditingId(null)
-    setEditingData(null)
+    setEditingData({})
   }
 
-  const handleDelete = async (userId: number) => {
-    if (!confirm('Tem certeza que deseja deletar este usuário?')) return
-
-    try {
-      await deleteUserMutation.mutateAsync(userId)
-    } catch (err) {
-      console.error('Erro ao deletar usuário:', err)
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen text-gray-500">
-        Carregando usuários...
-      </div>
-    )
-  }
-
-  if (isError) {
-    return (
-      <div className="flex items-center justify-center min-h-screen text-red-600">
-        Erro ao carregar usuários: {error?.message}
-      </div>
-    )
-  }
+  if (isLoading) return <div>Carregando usuários...</div>
+  if (isError) return <div>Erro: {error?.message}</div>
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Gerenciar Usuários</h1>
-            <p className="text-gray-600 mt-1">
-              Visualize, edite e gerencie os usuários do sistema.
-            </p>
-          </div>
-
-          <Button onClick={() => navigate('/master/usuarios/novo')}>
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Usuário
-          </Button>
-        </div>
-
-        {/* Erros de mutação */}
-        {(updateUserMutation.isError || deleteUserMutation.isError) && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {updateUserMutation.error?.message ||
-              deleteUserMutation.error?.message ||
-              'Erro ao executar operação'}
-          </div>
-        )}
-
-        {/* Tabela */}
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Nome
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Perfil
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Criado em
-                </th>
-                <th className="px-6 py-3" />
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-gray-200">
-              {users?.map(user => (
-                <tr key={user.id}>
-                  {editingId === user.id ? (
-                    <>
-                      <td className="px-6 py-4">
-                        <Input
-                          name="name"
-                          value={editingData?.name || ''}
-                          onChange={handleEditChange}
-                        />
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <Input
-                          name="email"
-                          value={editingData?.email || ''}
-                          onChange={handleEditChange}
-                        />
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <Select
-                          value={editingData?.role}
-                          onValueChange={handleRoleChange}
-                        >
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Perfil" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="master">Master</SelectItem>
-                            <SelectItem value="atendente">
-                              Atendente
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </td>
-
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {new Date(user.created_at).toLocaleDateString('pt-BR')}
-                      </td>
-
-                      <td className="px-6 py-4 text-right space-x-2">
-                        <Button size="sm" onClick={handleSaveEdit}>
-                          <Save className="w-4 h-4 mr-2" />
-                          Salvar
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={handleCancelEdit}
-                        >
-                          <XCircle className="w-4 h-4 mr-2" />
-                          Cancelar
-                        </Button>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="px-6 py-4 font-medium">
-                        {user.name}
-                      </td>
-                      <td className="px-6 py-4 text-gray-600">
-                        {user.email}
-                      </td>
-                      <td className="px-6 py-4">
-                        {user.role === 'master' ? 'Master' : 'Atendente'}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {new Date(user.created_at).toLocaleDateString('pt-BR')}
-                      </td>
-                      <td className="px-6 py-4 text-right space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEdit(user)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            navigate(`/master/permissoes/${user.id}`)
-                          }
-                        >
-                          <Shield className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDelete(user.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </td>
-                    </>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Usuários</h1>
+        <Button onClick={() => navigate('/master/usuarios/novo')}>
+          <Plus className="w-4 h-4 mr-2" />
+          Novo
+        </Button>
       </div>
+
+      <table className="w-full bg-white shadow rounded">
+        <thead>
+          <tr className="text-left border-b">
+            <th className="p-3">Nome</th>
+            <th className="p-3">Email</th>
+            <th className="p-3">Role</th>
+            <th className="p-3">Criado</th>
+            <th className="p-3 text-right" />
+          </tr>
+        </thead>
+
+        <tbody>
+          {users?.map(user => (
+            <tr key={user.id} className="border-b">
+              {editingId === user.id ? (
+                <>
+                  <td className="p-3">
+                    <Input
+                      name="name"
+                      value={editingData.name ?? ''}
+                      onChange={handleChange}
+                    />
+                  </td>
+                  <td className="p-3">
+                    <Input
+                      name="email"
+                      value={editingData.email ?? ''}
+                      onChange={handleChange}
+                    />
+                  </td>
+                  <td className="p-3">
+                    {authUser?.role === 'master' &&
+                    authUser.id !== user.id ? (
+                      <Select
+                        value={editingData.role}
+                        onValueChange={handleRoleChange}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="master">Master</SelectItem>
+                          <SelectItem value="atendente">
+                            Atendente
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-gray-500">
+                        {user.role}
+                      </span>
+                    )}
+                  </td>
+                  <td className="p-3">
+                    {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                  </td>
+                  <td className="p-3 text-right space-x-2">
+                    <Button size="sm" onClick={handleSave}>
+                      <Save className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setEditingId(null)}
+                    >
+                      <XCircle className="w-4 h-4" />
+                    </Button>
+                  </td>
+                </>
+              ) : (
+                <>
+                  <td className="p-3">{user.name}</td>
+                  <td className="p-3">{user.email}</td>
+                  <td className="p-3">{user.role}</td>
+                  <td className="p-3">
+                    {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                  </td>
+                  <td className="p-3 text-right space-x-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(user)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        navigate(`/master/permissoes/${user.id}`)
+                      }
+                    >
+                      <Shield className="w-4 h-4" />
+                    </Button>
+
+                    {user.deleted_at ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => restoreUser.mutate(user.id)}
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => deleteUser.mutate(user.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </td>
+                </>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }

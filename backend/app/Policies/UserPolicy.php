@@ -6,23 +6,80 @@ use App\Models\User;
 
 class UserPolicy extends BasePolicy
 {
-    public function viewAny(User $user): bool
+    /**
+     * Listar usuários
+     */
+    public function viewAny(User $authUser): bool
     {
-        return false;
+        return $authUser->hasPermission('usuarios.view');
     }
 
-    public function view(User $user, User $target): bool
+    /**
+     * Ver usuário específico
+     */
+    public function view(User $authUser, User $targetUser): bool
     {
-        return $user->id === $target->id;
+        // Pode ver a si mesmo
+        if ($authUser->id === $targetUser->id) {
+            return true;
+        }
+
+        // Ou se tiver permissão explícita
+        return $authUser->hasPermission('usuarios.view');
     }
 
-    public function update(User $user, User $target): bool
+    /**
+     * Atualizar usuário
+     */
+    public function update(User $authUser, User $targetUser): bool
     {
-        return $user->id === $target->id;
+        // Pode editar a si mesmo (nome/email)
+        if ($authUser->id === $targetUser->id) {
+            return true;
+        }
+
+        return $authUser->hasPermission('usuarios.update');
     }
 
-    public function delete(User $user, User $target): bool
+    /**
+     * Alterar ROLE
+     */
+    public function updateRole(User $authUser, User $targetUser): bool
     {
-        return $user->id !== $target->id;
+        // BasePolicy já libera master
+        // Aqui reforçamos regras de segurança
+
+        // Nunca pode alterar a própria role
+        if ($authUser->id === $targetUser->id) {
+            return false;
+        }
+
+        return $authUser->hasPermission('usuarios.update');
+    }
+
+    /**
+     * Deletar usuário (soft delete)
+     */
+    public function delete(User $authUser, User $targetUser): bool
+    {
+        // Nunca pode deletar a si mesmo
+        if ($authUser->id === $targetUser->id) {
+            return false;
+        }
+
+        return $authUser->hasPermission('usuarios.delete');
+    }
+
+    /**
+     * Restaurar usuário
+     */
+    public function restore(User $authUser, User $targetUser): bool
+    {
+        // Nunca pode restaurar a si mesmo
+        if ($authUser->id === $targetUser->id) {
+            return false;
+        }
+
+        return $authUser->hasPermission('usuarios.restore');
     }
 }

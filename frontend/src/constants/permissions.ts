@@ -23,6 +23,7 @@ export const Permissions = {
   USUARIOS_CREATE: 'usuarios.create',
   USUARIOS_UPDATE: 'usuarios.update',
   USUARIOS_DELETE: 'usuarios.delete',
+  USUARIOS_RESTORE: 'usuarios.restore',
 } as const
 
 /**

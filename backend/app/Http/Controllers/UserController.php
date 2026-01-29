@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Builder;
 
 class UserController extends Controller
 {
@@ -13,8 +14,9 @@ class UserController extends Controller
         $this->authorize('viewAny', User::class);
 
         return response()->json(
-            User::select('id', 'name', 'email', 'role', 'created_at')
-                ->orderBy('created_at', 'desc')
+            User::withTrashed()
+                ->select('id', 'name', 'email', 'role', 'created_at', 'deleted_at')
+                ->latest()
                 ->get()
         );
     }
@@ -34,20 +36,20 @@ class UserController extends Controller
     {
         $targetUser = User::findOrFail($id);
 
-        // 🔐 Autorização correta
         $this->authorize('update', $targetUser);
 
-        $authUser = Auth::user();
-
-        // ✅ Validação base (todos podem alterar esses campos se autorizados)
         $rules = [
             'name'  => 'sometimes|required|string|max:255',
             'email' => 'sometimes|required|email|unique:users,email,' . $targetUser->id,
         ];
 
-        // ✅ Somente MASTER pode alterar role
-        if ($authUser->isMaster()) {
-            $rules['role'] = 'sometimes|required|in:master,atendente';
+        // ROLE só se:
+        // - veio no request
+        // - policy permitir
+        if ($request->has('role')) {
+            $this->authorize('updateRole', $targetUser);
+
+            $rules['role'] = 'required|in:master,atendente';
         }
 
         $validated = $request->validate($rules);
@@ -76,6 +78,26 @@ class UserController extends Controller
 
         return response()->json([
             'message' => 'Usuário deletado com sucesso'
+        ]);
+    }
+
+    public function restore($id)
+    {
+        $targetUser = User::withTrashed()->findOrFail($id);
+
+        $this->authorize('restore', $targetUser);
+
+        if (! $targetUser->trashed()) {
+            return response()->json([
+                'message' => 'Usuário não está deletado'
+            ], 400);
+        }
+
+        $targetUser->restore();
+
+        return response()->json([
+            'message' => 'Usuário restaurado com sucesso',
+            'user' => $targetUser->only('id', 'name', 'email', 'role')
         ]);
     }
 }

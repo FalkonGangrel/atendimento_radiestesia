@@ -60,3 +60,21 @@ export function useDeleteUser() {
     },
   });
 }
+
+/**
+ * Restaura um usuário deletado
+ */
+export function useRestoreUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation<void, AxiosError, number>({
+    mutationFn: async (userId) => {
+      await api.post(`/users/${userId}/restore`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: usersQueryKeys.all,
+      });
+    },
+  });
+}

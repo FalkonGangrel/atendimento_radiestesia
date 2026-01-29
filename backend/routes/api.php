@@ -80,6 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Gerenciamento de Usuários
         Route::apiResource('users', UserController::class)->except(['store']); // Store é feito via AuthController::register
+        Route::post('/users/{id}/restore', [UserController::class, 'restore']);
         // A rota de criação de usuário (store) é tratada pelo AuthController::register,
         // mas se você quiser uma rota para Masters criarem usuários diretamente, adicione:
         // Route::post('/users', [UserController::class, 'store']);
