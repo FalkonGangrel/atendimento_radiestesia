@@ -24,7 +24,7 @@ class ClienteController extends Controller
         $user = auth()->user();
 
         $query = Cliente::query()
-            ->where('ativo', true)
+            ->latest()
             ->orderBy('nome');
 
         if ($user->isMaster()) {
@@ -69,7 +69,6 @@ class ClienteController extends Controller
             'whatsapp' => $data['whatsapp'] ?? null,
             'data_nascimento' => $data['data_nascimento'] ?? null,
             'observacoes' => $data['observacoes'] ?? null,
-            'ativo' => true,
             'user_id' => auth()->id(),
         ]);
 
@@ -90,7 +89,6 @@ class ClienteController extends Controller
             'whatsapp' => $data['whatsapp'] ?? null,
             'data_nascimento' => $data['data_nascimento'] ?? null,
             'observacoes' => $data['observacoes'] ?? null,
-            'ativo' => $data['ativo'] ?? $cliente->ativo,
         ]);
 
         return new ClienteResource($cliente->fresh());

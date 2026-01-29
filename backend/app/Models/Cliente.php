@@ -5,9 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Cliente extends Model
 {
+    use SoftDeletes;
+
     protected $table = 'clientes';
 
     protected $fillable = [
@@ -17,18 +20,16 @@ class Cliente extends Model
         'whatsapp',
         'data_nascimento',
         'observacoes',
-        'ativo',
         'user_id',
     ];
 
     protected $casts = [
         'data_nascimento' => 'date',
-        'ativo' => 'boolean',
     ];
 
     public function atendente(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id')->withTrashed();
     }
 
     public function atendimentos(): HasMany
