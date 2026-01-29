@@ -33,8 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   function hasPermission(permission: Permission): boolean {
     if (!user) return false
 
-    // master tem acesso total
-    if (user.permissions.includes('*' as Permission)) {
+    if (user.role === 'master') {
       return true
     }
 

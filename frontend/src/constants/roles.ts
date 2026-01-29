@@ -1,7 +1,8 @@
+// src/constants/roles.ts
 export const Roles = {
   MASTER: 'master',
   ADMIN: 'admin',
-  USER: 'user',
-} as const;
+  ATENDENTE: 'atendente',
+} as const
 
-export type Role = typeof Roles[keyof typeof Roles];
+export type Role = typeof Roles[keyof typeof Roles]
