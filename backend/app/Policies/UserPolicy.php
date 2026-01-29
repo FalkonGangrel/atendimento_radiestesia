@@ -19,37 +19,26 @@ class UserPolicy extends BasePolicy
      */
     public function view(User $authUser, User $targetUser): bool
     {
-        // Pode ver a si mesmo
-        if ($authUser->id === $targetUser->id) {
-            return true;
-        }
-
-        // Ou se tiver permissão explícita
         return $authUser->hasPermission('usuarios.view');
     }
 
     /**
-     * Atualizar usuário
+     * Atualizar usuário (dados básicos)
      */
     public function update(User $authUser, User $targetUser): bool
     {
-        // Pode editar a si mesmo (nome/email)
         if ($authUser->id === $targetUser->id) {
-            return true;
+            return false;
         }
 
         return $authUser->hasPermission('usuarios.update');
     }
 
     /**
-     * Alterar ROLE
+     * Alterar role
      */
     public function updateRole(User $authUser, User $targetUser): bool
     {
-        // BasePolicy já libera master
-        // Aqui reforçamos regras de segurança
-
-        // Nunca pode alterar a própria role
         if ($authUser->id === $targetUser->id) {
             return false;
         }
@@ -62,7 +51,6 @@ class UserPolicy extends BasePolicy
      */
     public function delete(User $authUser, User $targetUser): bool
     {
-        // Nunca pode deletar a si mesmo
         if ($authUser->id === $targetUser->id) {
             return false;
         }
@@ -75,11 +63,6 @@ class UserPolicy extends BasePolicy
      */
     public function restore(User $authUser, User $targetUser): bool
     {
-        // Nunca pode restaurar a si mesmo
-        if ($authUser->id === $targetUser->id) {
-            return false;
-        }
-
         return $authUser->hasPermission('usuarios.restore');
     }
 }

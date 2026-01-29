@@ -2,46 +2,28 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\ListModel;
-use App\Models\TipoAtendimento;
+use App\Models\User;
 
 class ListPolicy extends BasePolicy
 {
     public function viewAny(User $user): bool
     {
-        return true;
+        return true; // todos autenticados veem listas
     }
 
-    public function view(User $user, ListModel $list): bool
-    {
-        return true;
-    }
-
-    // Apenas master (bloqueado aqui, liberado no before)
     public function create(User $user): bool
     {
-        return false;
+        return $user->hasPermission('listas.manage');
     }
 
     public function update(User $user, ListModel $list): bool
     {
-        return false;
+        return $user->hasPermission('listas.manage');
     }
 
     public function delete(User $user, ListModel $list): bool
     {
-        return false;
-    }
-
-    public function viewInTipo(User $user, ListModel $list, TipoAtendimento $tipo): bool
-    {
-        // Primeiro verifica se tem permissão para o tipo
-        if (!$user->hasPermissionForTipo($tipo->id)) {
-            return false;
-        }
-
-        // Depois verifica se a lista está vinculada ao tipo
-        return $tipo->lists()->where('list_id', $list->id)->exists();
+        return $user->hasPermission('listas.manage');
     }
 }

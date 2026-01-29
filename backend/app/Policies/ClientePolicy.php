@@ -7,45 +7,46 @@ use App\Models\User;
 
 class ClientePolicy extends BasePolicy
 {
-    /**
-     * Listagem
-     * Todos usuários autenticados podem listar,
-     * o filtro será aplicado no controller.
-     */
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->hasPermission('clientes.view');
     }
 
-    /**
-     * Visualizar cliente
-     */
     public function view(User $user, Cliente $cliente): bool
     {
-        return $user->isMaster() || $cliente->user_id === $user->id;
+        if ($user->hasPermission('clientes.view')) {
+            return true;
+        }
+
+        return $user->hasPermission('clientes.view_owner')
+            && $this->isOwner($user, $cliente);
     }
 
-    /**
-     * Criar cliente
-     */
     public function create(User $user): bool
     {
-        return true;
+        return $user->hasPermission('clientes.create');
     }
 
-    /**
-     * Atualizar cliente
-     */
     public function update(User $user, Cliente $cliente): bool
     {
-        return $user->isMaster() || $cliente->user_id === $user->id;
+        if (! $user->hasPermission('clientes.update')) {
+            return false;
+        }
+
+        return $this->isOwner($user, $cliente) || $this->isAdmin($user);
     }
 
-    /**
-     * Desativar cliente
-     */
     public function delete(User $user, Cliente $cliente): bool
     {
-        return $user->isMaster() || $cliente->user_id === $user->id;
+        if (! $user->hasPermission('clientes.delete')) {
+            return false;
+        }
+
+        return $this->isOwner($user, $cliente) || $this->isAdmin($user);
+    }
+
+    public function restore(User $authUser, Cliente $cliente): bool
+    {
+        return $authUser->hasPermission('clientes.restore');
     }
 }

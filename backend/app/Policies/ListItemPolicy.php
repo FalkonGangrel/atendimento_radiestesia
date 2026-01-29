@@ -2,13 +2,23 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\ListItem;
-
+use App\Models\User;
 
 class ListItemPolicy extends BasePolicy
 {
-    public function create(User $user): bool { return false; }
-    public function update(User $user, ListItem $item): bool { return false; }
-    public function delete(User $user, ListItem $item): bool { return false; }
+    public function create(User $user): bool
+    {
+        return $user->hasPermission('listas.manage');
+    }
+
+    public function update(User $user, ListItem $item): bool
+    {
+        return $user->hasPermission('listas.manage');
+    }
+
+    public function delete(User $user, ListItem $item): bool
+    {
+        return $user->hasPermission('listas.manage');
+    }
 }

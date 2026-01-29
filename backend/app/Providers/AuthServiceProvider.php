@@ -5,7 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
-//Models
+// Models
 use App\Models\Cliente;
 use App\Models\CustomField;
 use App\Models\FieldSection;
@@ -14,7 +14,7 @@ use App\Models\ListItem;
 use App\Models\TipoAtendimento;
 use App\Models\User;
 
-//Policies
+// Policies
 use App\Policies\ClientePolicy;
 use App\Policies\CustomFieldPolicy;
 use App\Policies\FieldSectionPolicy;
@@ -25,9 +25,6 @@ use App\Policies\UserPolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
-    /**
-     * Register services.
-     */
     protected $policies = [
         Cliente::class => ClientePolicy::class,
         CustomField::class => CustomFieldPolicy::class,
@@ -38,20 +35,27 @@ class AuthServiceProvider extends ServiceProvider
         User::class => UserPolicy::class,
     ];
 
-    public function register(): void
-    {
-        //
-    }
-
-    /**
-     * Bootstrap services.
-     */
     public function boot(): void
     {
-        Gate::define('view-dashboard', function ($user) {
-            return $user->isMaster();
+        $this->registerPolicies();
+
+        /**
+         * Gate genérico de permissão (permissions.php)
+         */
+        Gate::define('permission', function (User $user, string $permission) {
+            return $user->hasPermission($permission);
         });
 
+        /**
+         * Dashboard master (mantido por clareza semântica)
+         */
+        Gate::define('view-dashboard', function (User $user) {
+            return $user->hasPermission('dashboard.master');
+        });
+
+        /**
+         * Permissões de campos por usuário
+         */
         Gate::define('manage-user-field-permissions', function (User $user, User $target) {
             if ($target->isMaster() && $user->id !== $target->id) {
                 return false;
