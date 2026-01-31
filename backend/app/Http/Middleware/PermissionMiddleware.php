@@ -11,10 +11,19 @@ class PermissionMiddleware
     {
         $user = $request->user();
 
-        if (! $user || ! $user->hasPermission($permission)) {
-            return response()->json([
-                'message' => 'Acesso não autorizado'
-            ], 403);
+        if (!$user) {
+            abort(401);
+        }
+
+        // 🔥 MASTER PASSA SEM VERIFICAÇÃO
+        if ($user->role === 'master') {
+            return $next($request);
+        }
+
+        $permissions = config("permissions.{$user->role}", []);
+
+        if (!in_array($permission, $permissions)) {
+            abort(403, 'Permissão negada');
         }
 
         return $next($request);

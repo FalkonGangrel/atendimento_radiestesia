@@ -1,8 +1,4 @@
-import {
-  LogOut,
-  Menu,
-  X,
-} from 'lucide-react'
+import { LogOut, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
@@ -21,12 +17,12 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
-  const handleLogout = async () => {
-    await logout()
+  const handleLogout = () => {
+    logout()
     navigate('/login')
   }
 
-  // 🔒 Evita render enquanto carrega autenticação
+  // 🔒 Aguarda autenticação
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-100">
@@ -35,7 +31,7 @@ export default function Layout({ children }: LayoutProps) {
     )
   }
 
-  // 🔒 Segurança extra
+  // 🔒 Segurança absoluta
   if (!user) {
     return null
   }
@@ -54,9 +50,11 @@ export default function Layout({ children }: LayoutProps) {
           <h1 className="font-bold">
             {sidebarOpen ? 'Radionics' : 'R'}
           </h1>
+
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="text-gray-400 hover:text-white"
+            aria-label="Alternar menu"
           >
             {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -82,7 +80,8 @@ export default function Layout({ children }: LayoutProps) {
                 <div className="space-y-1">
                   {visibleItems.map(item => {
                     const Icon = item.icon
-                    const isActive = location.pathname === item.path
+                    const isActive =
+                      location.pathname === item.path
 
                     return (
                       <button
@@ -108,7 +107,9 @@ export default function Layout({ children }: LayoutProps) {
         <div className="p-4 border-t border-gray-700">
           <div className="mb-4">
             <p className="font-semibold truncate">{user.name}</p>
-            <p className="text-xs text-gray-400 truncate">{user.email}</p>
+            <p className="text-xs text-gray-400 truncate">
+              {user.email}
+            </p>
           </div>
 
           <button

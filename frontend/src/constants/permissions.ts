@@ -13,6 +13,7 @@ export const Permissions = {
   LISTAS_MANAGE: 'listas.manage',
 
   TIPOS_ATENDIMENTO_MANAGE: 'tipos-atendimento.manage',
+  TIPOS_ATENDIMENTO_VIEW: 'tipos-atendimento.view',
 
   USUARIOS_MANAGE: 'usuarios.manage',
   USUARIOS_VIEW: 'usuarios.view',

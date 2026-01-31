@@ -5,7 +5,7 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from '@/lib/queryClient'
 import { AuthProvider } from '@/contexts'
 
-import ProtectedRoute from '@/routes/ProtectedRoute'
+import RequireAuth from '@/guards/RequireAuth'
 import PermissionRoute from '@/routes/PermissionRoute'
 import LayoutRoute from '@/routes/LayoutRoute'
 
@@ -19,6 +19,7 @@ import Clientes from '@/pages/Clientes'
 import ClienteDetail from '@/pages/ClienteDetail'
 import ClienteForm from '@/pages/ClienteForm'
 import Usuarios from '@/pages/Usuarios'
+import TiposAtendimento from '@/pages/TiposAtendimento'
 
 export default function App() {
   return (
@@ -27,13 +28,15 @@ export default function App() {
         <BrowserRouter>
           <Routes>
 
-            {/* Públicas */}
+            {/* 🌐 Públicas */}
             <Route path="/login" element={<Login />} />
             <Route path="/403" element={<Forbidden />} />
 
             {/* 🔐 Autenticadas */}
-            <Route element={<ProtectedRoute />}>
+            <Route element={<RequireAuth />}>
               <Route element={<LayoutRoute />}>
+
+                {/* Dashboard */}
                 <Route path="/" element={<Dashboard />} />
 
                 {/* Clientes */}
@@ -43,13 +46,27 @@ export default function App() {
                 <Route path="/clientes/:id/editar" element={<ClienteForm />} />
 
                 {/* 👑 Usuários (perm. granular) */}
-                <Route element={<PermissionRoute permission={Permissions.USUARIOS_VIEW} />}>
+                <Route
+                  element={
+                    <PermissionRoute permission={Permissions.USUARIOS_VIEW} />
+                  }
+                >
                   <Route path="/master/usuarios" element={<Usuarios />} />
                 </Route>
+
+                {/* Tipos de Atendimento (perm. granular) */}
+                <Route
+                  element={
+                    <PermissionRoute permission={Permissions.TIPOS_ATENDIMENTO_VIEW} />
+                  }
+                >
+                  <Route path="/master/tipos-atendimento" element={<TiposAtendimento />} />
+                </Route>
+
               </Route>
             </Route>
 
-            {/* Fallback */}
+            {/* 🚨 Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
 
           </Routes>

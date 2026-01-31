@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from 'react-router-dom'
-import { useAuth } from '@/contexts/'
+import { useAuth } from '@/contexts'
 
 export default function RequireAuth() {
   const { isAuthenticated, isLoading } = useAuth()

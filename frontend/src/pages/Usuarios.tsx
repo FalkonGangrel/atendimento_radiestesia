@@ -1,9 +1,16 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { useUsersList, useUpdateUser, useDeleteUser, useRestoreUser } from '@/hooks/useUsers'
-import { useAuth } from '@/contexts/'
+import {
+  useUsersList,
+  useUpdateUser,
+  useDeleteUser,
+  useRestoreUser,
+} from '@/hooks/useUsers'
 
+import { canManageUsuarios, canManagePermissionsUsuarios } from '@/helpers/permissions'
+
+import { useAuth } from '@/contexts'
 import type { UserListItem } from '@/types'
 
 import { Button } from '@/components/ui/button'
@@ -16,7 +23,15 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-import { Edit, Trash2, Save, XCircle, Shield, Plus, RotateCcw } from 'lucide-react'
+import {
+  Edit,
+  Trash2,
+  Save,
+  XCircle,
+  Shield,
+  Plus,
+  RotateCcw,
+} from 'lucide-react'
 
 export default function Usuarios() {
   const navigate = useNavigate()
@@ -40,7 +55,10 @@ export default function Usuarios() {
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditingData(prev => ({ ...prev, [e.target.name]: e.target.value }))
+    setEditingData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }))
   }
 
   const handleRoleChange = (role: UserListItem['role']) => {
@@ -59,17 +77,35 @@ export default function Usuarios() {
     setEditingData({})
   }
 
-  if (isLoading) return <div>Carregando usuários...</div>
-  if (isError) return <div>Erro: {error?.message}</div>
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-gray-500">Carregando usuários...</div>
+            </div>
+        );
+    }
+
+    if (isError) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-red-500">
+                    Erro ao carregar usuários: {error?.message}
+                </div>
+            </div>
+        );
+    }
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Usuários</h1>
-        <Button onClick={() => navigate('/master/usuarios/novo')}>
-          <Plus className="w-4 h-4 mr-2" />
-          Novo
-        </Button>
+
+        {canManageUsuarios(authUser) && (
+          <Button onClick={() => navigate('/master/usuarios/novo')}>
+            <Plus className="w-4 h-4 mr-2" />
+            Novo
+          </Button>
+        )}
       </div>
 
       <table className="w-full bg-white shadow rounded">
@@ -95,6 +131,7 @@ export default function Usuarios() {
                       onChange={handleChange}
                     />
                   </td>
+
                   <td className="p-3">
                     <Input
                       name="email"
@@ -102,8 +139,9 @@ export default function Usuarios() {
                       onChange={handleChange}
                     />
                   </td>
+
                   <td className="p-3">
-                    {authUser?.role === 'master' &&
+                    {canManageUsuarios(authUser) &&
                     authUser.id !== user.id ? (
                       <Select
                         value={editingData.role}
@@ -120,22 +158,26 @@ export default function Usuarios() {
                         </SelectContent>
                       </Select>
                     ) : (
-                      <span className="text-gray-500">
-                        {user.role}
-                      </span>
+                      <span className="text-gray-500">{user.role}</span>
                     )}
                   </td>
+
                   <td className="p-3">
                     {new Date(user.created_at).toLocaleDateString('pt-BR')}
                   </td>
+
                   <td className="p-3 text-right space-x-2">
                     <Button size="sm" onClick={handleSave}>
                       <Save className="w-4 h-4" />
                     </Button>
+
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setEditingId(null)}
+                      onClick={() => {
+                        setEditingId(null)
+                        setEditingData({})
+                      }}
                     >
                       <XCircle className="w-4 h-4" />
                     </Button>
@@ -149,41 +191,50 @@ export default function Usuarios() {
                   <td className="p-3">
                     {new Date(user.created_at).toLocaleDateString('pt-BR')}
                   </td>
+
                   <td className="p-3 text-right space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEdit(user)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        navigate(`/master/permissoes/${user.id}`)
-                      }
-                    >
-                      <Shield className="w-4 h-4" />
-                    </Button>
-
-                    {user.deleted_at ? (
+                    {canManageUsuarios(authUser) && (
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => restoreUser.mutate(user.id)}
+                        onClick={() => handleEdit(user)}
                       >
-                        <RotateCcw className="w-4 h-4" />
+                        <Edit className="w-4 h-4" />
                       </Button>
-                    ) : (
+                    )}
+
+                    {canManagePermissionsUsuarios(authUser) && (
                       <Button
                         size="sm"
-                        variant="destructive"
-                        onClick={() => deleteUser.mutate(user.id)}
+                        variant="outline"
+                        onClick={() =>
+                          navigate(`/master/permissoes/${user.id}`)
+                        }
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Shield className="w-4 h-4" />
                       </Button>
+                    )}
+
+                    {user.deleted_at ? (
+                      canManageUsuarios(authUser) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => restoreUser.mutate(user.id)}
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                        </Button>
+                      )
+                    ) : (
+                      canManageUsuarios(authUser) && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => deleteUser.mutate(user.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )
                     )}
                   </td>
                 </>

@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Registrar aliases de middleware
         $middleware->alias([
             'master' => \App\Http\Middleware\EnsureMaster::class,
+            'permission' => \App\Http\Middleware\PermissionMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
