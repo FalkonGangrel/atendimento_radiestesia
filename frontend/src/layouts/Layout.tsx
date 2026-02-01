@@ -12,7 +12,7 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const { user, logout, hasPermission, isLoading } = useAuth()
+  const { user, logout, isLoading } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -52,6 +52,7 @@ export default function Layout({ children }: LayoutProps) {
           </h1>
 
           <button
+            title='Alternar menu'
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="text-gray-400 hover:text-white"
             aria-label="Alternar menu"
@@ -64,13 +65,13 @@ export default function Layout({ children }: LayoutProps) {
         <nav className="flex-1 p-4 space-y-4">
           {menuConfig.map((section, index) => {
             const visibleItems = section.items.filter(
-              item => !item.permission || hasPermission(item.permission)
+              item => !item.can || item.can(user)
             )
 
             if (visibleItems.length === 0) return null
 
             return (
-              <div key={index}>
+              <div key={section.label ?? index}>
                 {section.label && sidebarOpen && (
                   <p className="px-4 py-2 text-xs font-bold text-gray-400 uppercase">
                     {section.label}
@@ -80,13 +81,17 @@ export default function Layout({ children }: LayoutProps) {
                 <div className="space-y-1">
                   {visibleItems.map(item => {
                     const Icon = item.icon
-                    const isActive =
-                      location.pathname === item.path
+                    const isActive = location.pathname.startsWith(item.path)
 
                     return (
                       <button
+                        title={item.label}
                         key={item.path}
-                        onClick={() => navigate(item.path)}
+                        onClick={() => {
+                          if (!item.can || item.can(user)) {
+                            navigate(item.path)
+                          }
+                        }}
                         className={clsx(
                           menuItemClass(!sidebarOpen),
                           isActive && 'bg-gray-800'
@@ -113,6 +118,7 @@ export default function Layout({ children }: LayoutProps) {
           </div>
 
           <button
+            title='Sair'
             onClick={handleLogout}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 rounded hover:bg-red-700 transition"
           >

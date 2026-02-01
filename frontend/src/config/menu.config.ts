@@ -8,15 +8,22 @@ import {
   Settings,
   Users,
 } from 'lucide-react'
+
 import type { ElementType } from 'react'
 
-import { type Permission, Permissions } from '@/constants/permissions'
+import type { AuthUser } from '@/contexts/AuthContext.types'
+
+import {
+  canManageUsuarios,
+  canManageTiposAtendimento,
+  canAccessMasterDashboard,
+} from '@/helpers/permissions'
 
 export interface MenuItem {
   label: string
   path: string
   icon: ElementType
-  permission?: Permission
+  can?: (user: AuthUser | null) => boolean
 }
 
 export interface MenuSection {
@@ -56,31 +63,31 @@ export const menuConfig: readonly MenuSection[] = [
         label: 'Usuários',
         path: '/master/usuarios',
         icon: Users,
-        permission: Permissions.USUARIOS_MANAGE,
+        can: canManageUsuarios,
       },
       {
         label: 'Tipos de Atendimento',
         path: '/master/tipos-atendimento',
         icon: DollarSign,
-        permission: Permissions.TIPOS_ATENDIMENTO_MANAGE,
+        can: canManageTiposAtendimento,
       },
       {
         label: 'Campos Configuráveis',
         path: '/master/campos',
         icon: Settings,
-        permission: Permissions.CAMPOS_MANAGE,
+        can: canManageTiposAtendimento,
       },
       {
         label: 'Listas',
         path: '/listas',
         icon: ListTodo,
-        permission: Permissions.LISTAS_MANAGE,
+        can: canManageTiposAtendimento,
       },
       {
         label: 'Dashboard Master',
         path: '/dashboard-master',
         icon: BarChart,
-        permission: Permissions.DASHBOARD_MASTER,
+        can: canAccessMasterDashboard,
       },
     ],
   },
