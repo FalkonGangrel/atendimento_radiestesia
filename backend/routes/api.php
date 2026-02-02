@@ -12,6 +12,7 @@ use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\TipoAtendimentoController;
 use App\Http\Controllers\TipoAtendimentoPermissionController;
+use App\Http\Controllers\UserTipoPermissionController;
 
 use Illuminate\Support\Facades\Route;
 
@@ -118,6 +119,20 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/users/{id}/restore', [UserController::class, 'restore'])
         ->middleware('permission:usuarios.restore');
+
+
+    // ============================
+    // PERMISSÕES GRANULARES DE USUÁRIOS POR ROLE (MASTER)
+    // ============================
+    Route::get(
+        '/users/{user}/permissions/{tipo}',
+        [UserTipoPermissionController::class, 'show']
+    );
+
+    Route::post(
+        '/users/{user}/permissions/{tipo}',
+        [UserTipoPermissionController::class, 'store']
+    );
 
     // ============================
     // PERMISSÕES DE TIPO DE ATENDIMENTO (MASTER)

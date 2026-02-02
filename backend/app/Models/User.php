@@ -45,6 +45,11 @@ class User extends Authenticatable
         )->withTimestamps();
     }
 
+    public function tipoPermissions(): HasMany
+    {
+        return $this->hasMany(UserTipoPermission::class);
+    }
+
     public function clientes(): HasMany
     {
         return $this->hasMany(Cliente::class, 'user_id');

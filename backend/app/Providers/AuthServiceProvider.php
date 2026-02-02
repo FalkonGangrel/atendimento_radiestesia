@@ -40,6 +40,13 @@ class AuthServiceProvider extends ServiceProvider
         $this->registerPolicies();
 
         /**
+         * Gate permissão para master.
+         */
+        Gate::define('manage-permissions', function ($user) {
+            return $user->role === 'master';
+        });
+
+        /**
          * Gate genérico de permissão (permissions.php)
          */
         Gate::define('permission', function (User $user, string $permission) {
