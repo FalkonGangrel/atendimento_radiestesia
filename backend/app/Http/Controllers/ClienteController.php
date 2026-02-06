@@ -14,89 +14,44 @@ class ClienteController extends Controller
         $this->authorizeResource(Cliente::class, 'cliente');
     }
 
-    /**
-     * Listagem de clientes
-     * - Master: todos + quem cadastrou
-     * - Outros: apenas os próprios
-     */
     public function index(Request $request)
     {
-        $user = auth()->user();
+        $this->authorize('viewAny', Cliente::class);
 
-        $query = Cliente::query()
-            ->latest()
-            ->orderBy('nome');
+        $clientes = Cliente::query()
+            ->with(['atendente:id,name,email'])
+            ->orderBy('nome')
+            ->get();
 
-        if ($user->isMaster()) {
-            $query->with('atendente:id,name,email');
-
-            if ($request->filled('user_id')) {
-                $query->where('user_id', $request->user_id);
-            }
-        } else {
-            $query->where('user_id', $user->id);
-        }
-
-        return ClienteResource::collection($query->get());
+        return ClienteResource::collection($clientes);
     }
 
-
-
-    /**
-     * Visualizar cliente
-     */
     public function show(Cliente $cliente)
     {
-        if (auth()->user()->isMaster()) {
-            $cliente->load('atendente:id,name,email');
-        }
-
-        return new ClienteResource($cliente);
+        return new ClienteResource($cliente->loadMissing(
+            auth()->user()->isMaster()
+                ? ['atendente:id,name,email']
+                : []
+        ));
     }
 
-
-    /**
-     * Criar cliente
-     */
     public function store(ClienteRequest $request)
     {
-        $data = $request->validated();
-
         $cliente = Cliente::create([
-            'nome' => $data['name'],
-            'email' => $data['email'] ?? null,
-            'telefone' => $data['telefone'],
-            'whatsapp' => $data['whatsapp'] ?? null,
-            'data_nascimento' => $data['birth_date'] ?? null,
-            'observacoes' => $data['observacoes'] ?? null,
+            ...$request->validated(),
             'user_id' => auth()->id(),
         ]);
 
         return new ClienteResource($cliente);
     }
 
-    /**
-     * Atualizar cliente
-     */
     public function update(ClienteRequest $request, Cliente $cliente)
     {
-        $data = $request->validated();
-
-        $cliente->update([
-            'nome' => $data['name'] ?? $cliente->nome,
-            'email' => $data['email'] ?? null,
-            'telefone' => $data['telefone'],
-            'whatsapp' => $data['whatsapp'] ?? null,
-            'data_nascimento' => $data['birth_date'] ?? null,
-            'observacoes' => $data['observacoes'] ?? null,
-        ]);
+        $cliente->update($request->validated());
 
         return new ClienteResource($cliente->fresh());
     }
 
-    /**
-     * Desativar cliente
-     */
     public function destroy(Cliente $cliente)
     {
         $cliente->update(['ativo' => false]);

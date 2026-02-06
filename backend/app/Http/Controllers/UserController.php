@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Database\Eloquent\Builder;
 
 class UserController extends Controller
 {
@@ -21,10 +20,8 @@ class UserController extends Controller
         );
     }
 
-    public function show($id)
+    public function show(User $user)
     {
-        $user = User::findOrFail($id);
-
         $this->authorize('view', $user);
 
         return response()->json(
@@ -32,72 +29,54 @@ class UserController extends Controller
         );
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, User $user)
     {
-        $targetUser = User::findOrFail($id);
-
-        $this->authorize('update', $targetUser);
+        $this->authorize('update', $user);
 
         $rules = [
             'name'  => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|email|unique:users,email,' . $targetUser->id,
+            'email' => 'sometimes|required|email|unique:users,email,' . $user->id,
         ];
 
-        // ROLE só se:
-        // - veio no request
-        // - policy permitir
         if ($request->has('role')) {
-            $this->authorize('updateRole', $targetUser);
-
+            $this->authorize('updateRole', $user);
             $rules['role'] = 'required|in:master,atendente';
         }
 
-        $validated = $request->validate($rules);
-
-        $targetUser->update($validated);
+        $user->update($request->validate($rules));
 
         return response()->json(
-            $targetUser->only('id', 'name', 'email', 'role')
+            $user->only('id', 'name', 'email', 'role')
         );
     }
 
-    public function destroy($id)
+    public function destroy(User $user)
     {
-        $targetUser = User::findOrFail($id);
+        $this->authorize('delete', $user);
 
-        $this->authorize('delete', $targetUser);
-
-        if ($targetUser->id === Auth::id()) {
+        if ($user->id === Auth::id()) {
             return response()->json(
                 ['message' => 'Você não pode deletar a si mesmo'],
                 403
             );
         }
 
-        $targetUser->delete();
+        $user->delete();
 
-        return response()->json([
-            'message' => 'Usuário deletado com sucesso'
-        ]);
+        return response()->json(['message' => 'Usuário deletado com sucesso']);
     }
 
     public function restore($id)
     {
-        $targetUser = User::withTrashed()->findOrFail($id);
+        $user = User::withTrashed()->findOrFail($id);
 
-        $this->authorize('restore', $targetUser);
+        $this->authorize('restore', $user);
 
-        if (! $targetUser->trashed()) {
-            return response()->json([
-                'message' => 'Usuário não está deletado'
-            ], 400);
-        }
-
-        $targetUser->restore();
+        $user->restore();
 
         return response()->json([
             'message' => 'Usuário restaurado com sucesso',
-            'user' => $targetUser->only('id', 'name', 'email', 'role')
+            'user' => $user->only('id', 'name', 'email', 'role')
         ]);
     }
 }
