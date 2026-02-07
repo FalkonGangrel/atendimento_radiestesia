@@ -10,9 +10,9 @@ abstract class BasePolicy
     use HandlesAuthorization;
 
     /**
-     * Regras globais antes de qualquer policy.
+     * Executado antes de qualquer método da policy.
      */
-    public function before(User $user, string $ability, $model = null): bool|null
+    public function before(User $user, string $ability): bool|null
     {
         // Master pode tudo
         if ($user->role === 'master') {
@@ -24,11 +24,11 @@ abstract class BasePolicy
 
     protected function isAdmin(User $user): bool
     {
-        return in_array($user->role, ['master', 'admin']);
+        return in_array($user->role, ['master', 'admin'], true);
     }
 
     protected function isOwner(User $user, $model): bool
     {
-        return isset($model->created_by) && $model->created_by === $user->id;
+        return isset($model->user_id) && $model->user_id === $user->id;
     }
 }

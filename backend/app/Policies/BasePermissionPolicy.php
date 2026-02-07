@@ -16,10 +16,6 @@ abstract class BasePermissionPolicy extends BasePolicy
         /** @var PermissionService $permissions */
         $permissions = app(PermissionService::class);
 
-        return $permissions->can(
-            $user,
-            $tipo,
-            $permissionKey
-        );
+        return $permissions->can($user, $tipo, $permissionKey);
     }
 }

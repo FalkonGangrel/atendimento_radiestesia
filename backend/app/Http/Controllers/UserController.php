@@ -40,7 +40,7 @@ class UserController extends Controller
 
         if ($request->has('role')) {
             $this->authorize('updateRole', $user);
-            $rules['role'] = 'required|in:master,atendente';
+            $rules['role'] = 'required|in:master,admin,atendente';
         }
 
         $user->update($request->validate($rules));

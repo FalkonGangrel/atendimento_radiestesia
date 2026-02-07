@@ -11,10 +11,12 @@ use App\Models\CustomField;
 use App\Models\FieldSection;
 use App\Models\ListModel;
 use App\Models\ListItem;
+use App\Models\TemplateAtendimento;
 use App\Models\TipoAtendimento;
 use App\Models\User;
 
 // Policies
+use App\Policies\AtendimentoPolicy;
 use App\Policies\ClientePolicy;
 use App\Policies\CustomFieldPolicy;
 use App\Policies\FieldSectionPolicy;
@@ -31,6 +33,7 @@ class AuthServiceProvider extends ServiceProvider
         FieldSection::class => FieldSectionPolicy::class,
         ListModel::class => ListPolicy::class,
         ListItem::class => ListItemPolicy::class,
+        TemplateAtendimento::class => AtendimentoPolicy::class,
         TipoAtendimento::class => TipoAtendimentoPolicy::class,
         User::class => UserPolicy::class,
     ];

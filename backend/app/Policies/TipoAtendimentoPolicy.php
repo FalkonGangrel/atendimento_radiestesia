@@ -5,30 +5,46 @@ namespace App\Policies;
 use App\Models\User;
 use App\Models\TipoAtendimento;
 
-class TipoAtendimentoPolicy extends BasePolicy
+class TipoAtendimentoPolicy extends BasePermissionPolicy
 {
-    public function viewAny(User $user): bool
+    public function viewAny(User $user, TipoAtendimento $tipo): bool
     {
-        return true;
+        return $this->can($user, $tipo, 'tipos.view');
     }
 
     public function view(User $user, TipoAtendimento $tipo): bool
     {
-        return true;
+        return $this->can(
+            $user,
+            $tipo,
+            'tipos.view'
+        );
     }
 
-    public function create(User $user): bool
+    public function create(User $user, TipoAtendimento $tipo): bool
     {
-        return $user->isMaster() || $user->isAdmin();
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $this->can($user, $tipo, 'tipos.manage');
     }
 
     public function update(User $user, TipoAtendimento $tipo): bool
     {
-        return $user->isMaster() || $user->isAdmin();
+        return $this->can(
+            $user,
+            $tipo,
+            'tipos.manage'
+        ) ;
     }
 
     public function delete(User $user, TipoAtendimento $tipo): bool
     {
-        return $user->isMaster();
+        return $this->can(
+            $user,
+            $tipo,
+            'tipos.manage'
+        );
     }
 }

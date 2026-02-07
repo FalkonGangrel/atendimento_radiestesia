@@ -9,15 +9,8 @@ use Illuminate\Support\Collection;
 
 class PermissionService
 {
-    /**
-     * Cache por request
-     * [userId][tipoId] => Collection
-     */
     protected array $cache = [];
 
-    /**
-     * Resolve TODAS as permissões efetivas
-     */
     public function resolve(User $user, TipoAtendimento $tipo): Collection
     {
         if ($this->isMaster($user)) {
@@ -28,15 +21,11 @@ class PermissionService
             ??= $this->permissionsFromDatabase($user, $tipo);
     }
 
-    /**
-     * Verifica UMA permissão específica
-     */
     public function can(
         User $user,
         TipoAtendimento $tipo,
         string $permissionKey
     ): bool {
-        // Master bypass
         if ($this->isMaster($user)) {
             return true;
         }

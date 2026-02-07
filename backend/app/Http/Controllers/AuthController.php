@@ -19,17 +19,16 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'sometimes|in:master,atendente',
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => $validated['role'] ?? 'atendente',
+            'role' => 'atendente',
         ]);
 
-        $token = $user->createToken('auth-token')->plainTextToken;
+        $token = $user->createToken($request->userAgent() ?? 'api')->plainTextToken;
 
         return response()->json([
             'message' => 'Usuário criado com sucesso',
@@ -63,9 +62,9 @@ class AuthController extends Controller
         }
 
         // Opcional: Revogar tokens antigos
-        // $user->tokens()->delete();
+        $user->tokens()->delete();
 
-        $token = $user->createToken('auth-token')->plainTextToken;
+        $token = $user->createToken($request->userAgent() ?? 'api')->plainTextToken;
 
         return response()->json([
             'message' => 'Login realizado com sucesso',

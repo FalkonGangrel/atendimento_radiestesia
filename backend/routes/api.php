@@ -1,17 +1,20 @@
 <?php
 
+use App\Models\TemplateAtendimento;
+use App\Models\TipoAtendimento;
+
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AtendimentoController;
+use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\CustomFieldController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FieldSectionController;
 use App\Http\Controllers\ListController;
 use App\Http\Controllers\ListItemController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MasterController;
-use App\Http\Controllers\FieldSectionController;
-use App\Http\Controllers\CustomFieldController;
-use App\Http\Controllers\ClienteController;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\TipoAtendimentoController;
 use App\Http\Controllers\TipoAtendimentoPermissionController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserTipoPermissionController;
 
 use Illuminate\Support\Facades\Route;
@@ -22,7 +25,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
 /*
 |--------------------------------------------------------------------------
@@ -78,7 +81,25 @@ Route::middleware('auth:sanctum')->group(function () {
     // ATENDIMENTOS
     // ============================
     Route::get('/atendimentos/stats', [AtendimentoController::class, 'stats']);
-    Route::apiResource('atendimentos', AtendimentoController::class);
+
+    // Listar atendimentos por tipo
+    Route::get('/atendimentos', [AtendimentoController::class, 'index']);
+
+    // Criar atendimento (depende do tipo)
+    Route::post('/atendimentos', [AtendimentoController::class, 'store'])
+        ->middleware('can:create,App\Models\TipoAtendimento');
+
+    // Visualizar atendimento específico
+    Route::get('/atendimentos/{atendimento}', [AtendimentoController::class, 'show'])
+        ->middleware('can:view,atendimento');
+
+    // Atualizar atendimento
+    Route::put('/atendimentos/{atendimento}', [AtendimentoController::class, 'update'])
+        ->middleware('can:update,atendimento');
+
+    // Deletar atendimento
+    Route::delete('/atendimentos/{atendimento}', [AtendimentoController::class, 'destroy'])
+        ->middleware('can:delete,atendimento');
 
     // ============================
     // CLIENTES

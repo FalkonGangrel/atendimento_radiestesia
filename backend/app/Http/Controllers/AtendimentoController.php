@@ -6,184 +6,93 @@ use App\Models\TemplateAtendimento;
 use App\Models\AtendimentoItem;
 use App\Models\TipoAtendimento;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class AtendimentoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $userId = Auth::id();
+        $tipo = TipoAtendimento::findOrFail(
+            $request->get('tipo_atendimento_id')
+        );
 
-        $atendimentos = TemplateAtendimento::where('user_id', $userId)
-            ->with(['cliente'])
-            ->orderBy('attendance_date', 'desc')
+        $this->authorize('viewAny', [TemplateAtendimento::class, $tipo]);
+
+        return TemplateAtendimento::where('user_id', $request->user()->id)
+            ->where('tipo_atendimento_id', $tipo->id)
+            ->with('cliente')
+            ->orderByDesc('attendance_date')
             ->get();
-
-        return response()->json($atendimentos);
     }
 
     public function store(Request $request)
     {
-        $user = $request->user();
-
-        // =======================
-        // VALIDAR TIPO
-        // =======================
-        $request->validate([
-            'tipo_atendimento_id' => 'required|exists:tipos_atendimento,id',
-        ]);
-
         $tipo = TipoAtendimento::findOrFail($request->tipo_atendimento_id);
 
-        // POLICY: pode criar?
-        if (!$user->can('create', $tipo)) {
-            return response()->json([
-                'message' => 'Você não tem permissão para criar atendimentos deste tipo'
-            ], 403);
-        }
+        $this->authorize('create', $tipo);
 
-        // ==============================
-        // VALIDAR DADOS DO ATENDIMENTO
-        // ==============================
         $validated = $request->validate([
             'cliente_id' => 'nullable|exists:clientes,id',
             'patient_name' => 'required|string|max:255',
             'birth_date' => 'required|date',
             'attendance_date' => 'required|date',
-            'treatment_focus' => 'nullable|string',
-            'observations' => 'nullable|string',
-            'tables_needed' => 'nullable|integer',
-            'lines_to_clean' => 'nullable|integer',
-            'fractals_percent' => 'nullable|numeric',
-            'treatment_duration_days' => 'nullable|integer',
-            'has_directives' => 'boolean',
-            'has_ancestralidade' => 'boolean',
-            'has_rco' => 'boolean',
-            'status' => 'nullable|in:em_andamento,concluido,cancelado',
             'custom_data' => 'nullable|array',
-            'items' => 'nullable|array'
+            'items' => 'nullable|array',
         ]);
 
-        // Forçar user_id
-        $validated['user_id'] = $user->id;
+        $validated['user_id'] = $request->user()->id;
+        $validated['tipo_atendimento_id'] = $tipo->id;
 
-        // Tipo de atendimento
-        $validated['tipo_atendimento_id'] = $request->tipo_atendimento_id;
-
-        // ==============================
-        // CRIAR ATENDIMENTO
-        // ==============================
         $atendimento = TemplateAtendimento::create($validated);
 
-        // ==============================
-        // VALIDAR E CRIAR ITEMS
-        // ==============================
-        if ($request->has('items') && is_array($request->items)) {
+        if (is_array($request->items)) {
+            $itensPermitidos = $tipo->listItems()
+                ->pluck('list_items.id')
+                ->toArray();
 
-            // Listas permitidas
-            $listasPermitidas = $tipo->lists()->pluck('lists.id')->toArray();
-            $itensPermitidos = $tipo->listItems()->pluck('list_items.id')->toArray();
-
-            foreach ($request->items as $itemData) {
-
-                // itemData deve ter: list_item_id, quantity (opcional)
-                if (!isset($itemData['list_item_id'])) continue;
-
-                $itemId = $itemData['list_item_id'];
-
-                if (!in_array($itemId, $itensPermitidos)) {
-                    return response()->json([
-                        'message' => "Item {$itemId} não permitido para este tipo de atendimento"
-                    ], 403);
+            foreach ($request->items as $item) {
+                if (!in_array($item['list_item_id'], $itensPermitidos)) {
+                    abort(403, 'Item não permitido');
                 }
 
-                // criar item
                 AtendimentoItem::create([
                     'template_atendimento_id' => $atendimento->id,
-                    'list_item_id' => $itemId,
-                    'quantity' => $itemData['quantity'] ?? null
+                    'list_item_id' => $item['list_item_id'],
+                    'quantity' => $item['quantity'] ?? null,
                 ]);
             }
         }
 
-        // Carregar tudo
-        $atendimento->load(['cliente', 'items.listItem']);
-
-        return response()->json($atendimento, 201);
+        return $atendimento->load(['cliente', 'items.listItem']);
     }
 
-    public function show($id)
+    public function show(TemplateAtendimento $atendimento)
     {
-        $userId = Auth::id();
+        $this->authorize('view', $atendimento);
 
-        $atendimento = TemplateAtendimento::where('id', $id)
-            ->where('user_id', $userId)
-            ->with(['cliente', 'items.listItem'])
-            ->firstOrFail();
-
-        return response()->json($atendimento);
+        return $atendimento->load(['cliente', 'items.listItem']);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, TemplateAtendimento $atendimento)
     {
-        $userId = Auth::id();
-
-        $atendimento = TemplateAtendimento::where('id', $id)
-            ->where('user_id', $userId)
-            ->firstOrFail();
+        $this->authorize('update', $atendimento);
 
         $validated = $request->validate([
-            'cliente_id' => 'nullable|exists:clientes,id',
-            'patient_name' => 'sometimes|required|string|max:255',
-            'birth_date' => 'sometimes|required|date',
-            'attendance_date' => 'sometimes|required|date',
-            'treatment_focus' => 'nullable|string',
-            'observations' => 'nullable|string',
-            'tables_needed' => 'nullable|integer',
-            'lines_to_clean' => 'nullable|integer',
-            'fractals_percent' => 'nullable|numeric',
-            'treatment_duration_days' => 'nullable|integer',
-            'has_directives' => 'boolean',
-            'has_ancestralidade' => 'boolean',
-            'has_rco' => 'boolean',
-            'status' => 'nullable|in:em_andamento,concluido,cancelado',
-            'custom_data' => 'nullable|array'
+            'patient_name' => 'sometimes|string|max:255',
+            'attendance_date' => 'sometimes|date',
+            'custom_data' => 'nullable|array',
         ]);
 
         $atendimento->update($validated);
 
-        $atendimento->load('cliente');
-
-        return response()->json($atendimento);
+        return $atendimento->load('cliente');
     }
 
-    public function destroy($id)
+    public function destroy(TemplateAtendimento $atendimento)
     {
-        $userId = Auth::id();
-
-        $atendimento = TemplateAtendimento::where('id', $id)
-            ->where('user_id', $userId)
-            ->firstOrFail();
+        $this->authorize('delete', $atendimento);
 
         $atendimento->delete();
 
-        return response()->json(['message' => 'Atendimento deletado com sucesso']);
-    }
-
-    public function stats()
-    {
-        $userId = Auth::id();
-
-        $total = TemplateAtendimento::where('user_id', $userId)->count();
-
-        $esteMes = TemplateAtendimento::where('user_id', $userId)
-            ->whereMonth('attendance_date', now()->month)
-            ->whereYear('attendance_date', now()->year)
-            ->count();
-
-        return response()->json([
-            'total' => $total,
-            'este_mes' => $esteMes,
-        ]);
+        return response()->json(['message' => 'Atendimento deletado']);
     }
 }
