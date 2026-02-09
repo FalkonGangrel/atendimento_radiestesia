@@ -34,7 +34,7 @@ class AuthServiceProvider extends ServiceProvider
         ListModel::class => ListPolicy::class,
         ListItem::class => ListItemPolicy::class,
         TemplateAtendimento::class => AtendimentoPolicy::class,
-        TipoAtendimento::class => TipoAtendimentoPolicy::class,
+        TipoAtendimento::class => AtendimentoPolicy::class,
         User::class => UserPolicy::class,
     ];
 

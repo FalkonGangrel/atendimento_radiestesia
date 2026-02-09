@@ -24,10 +24,6 @@ class AtendimentoPolicy extends BasePermissionPolicy
 
     public function create(User $user, TipoAtendimento $tipo): bool
     {
-        if ($user->isAdmin()) {
-            return true;
-        }
-
         return $this->can($user, $tipo, 'atendimentos.create');
     }
 

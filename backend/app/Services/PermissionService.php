@@ -11,9 +11,12 @@ class PermissionService
 {
     protected array $cache = [];
 
+    /**
+     * Resolve todas as permissões do usuário para um Tipo de Atendimento.
+     */
     public function resolve(User $user, TipoAtendimento $tipo): Collection
     {
-        if ($this->isMaster($user)) {
+        if ($this->isSuperUser($user)) {
             return $this->allPermissionsGranted();
         }
 
@@ -21,12 +24,15 @@ class PermissionService
             ??= $this->permissionsFromDatabase($user, $tipo);
     }
 
+    /**
+     * Verifica se o usuário pode executar uma ação específica.
+     */
     public function can(
         User $user,
         TipoAtendimento $tipo,
         string $permissionKey
     ): bool {
-        if ($this->isMaster($user)) {
+        if ($this->isSuperUser($user)) {
             return true;
         }
 
@@ -34,9 +40,14 @@ class PermissionService
             ->get($permissionKey, false);
     }
 
-    protected function isMaster(User $user): bool
+    /* -------------------------------------------------
+     |  Internals
+     | -------------------------------------------------
+     */
+
+    protected function isSuperUser(User $user): bool
     {
-        return $user->role === 'master';
+        return in_array($user->role, ['master', 'admin'], true);
     }
 
     protected function allPermissionsGranted(): Collection
@@ -52,6 +63,7 @@ class PermissionService
         User $user,
         TipoAtendimento $tipo
     ): Collection {
+        // Default: todas as permissões = false
         $permissions = Permission::query()
             ->pluck('key')
             ->mapWithKeys(fn ($key) => [$key => false]);

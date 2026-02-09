@@ -72,54 +72,11 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return in_array($this->role, ['admin', 'master']);
+        return in_array($this->role, ['admin', 'master'], true);
     }
 
     public function isAtendente(): bool
     {
         return $this->role === 'atendente';
-    }
-
-    /* -----------------------------------------------------------------
-    |   PERMISSÕES
-    |  -----------------------------------------------------------------
-     */
-
-    /**
-     * Retorna a lista de permissões do usuário baseada na role.
-     */
-    public function permissions(): array
-    {
-        $map = config('permissions');
-
-        return $map[$this->role] ?? [];
-    }
-
-    /**
-     * Verifica se o usuário possui determinada permissão.
-     */
-    public function hasPermission(string $permission): bool
-    {
-        // Fail-safe: Master sempre pode tudo
-        if ($this->isMaster()) {
-            return true;
-        }
-
-        return in_array($permission, $this->permissions(), true);
-    }
-
-    /**
-     * Verifica permissão para um Tipo de Atendimento específico.
-     */
-    public function hasPermissionForTipo(int $tipoId): bool
-    {
-        // Master tem acesso a todos os tipos
-        if ($this->isMaster()) {
-            return true;
-        }
-
-        return $this->tiposAtendimentoPermitidos()
-            ->where('tipos_atendimento.id', $tipoId)
-            ->exists();
     }
 }
