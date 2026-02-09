@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -32,11 +33,20 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $this->authorize('update', $user);
-
+        
         $rules = [
             'name'  => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|email|unique:users,email,' . $user->id,
         ];
+
+        if ($request->filled('email') && $request->email !== $user->email) {
+            $rules['email'] = [
+                'required',
+                'email',
+                Rule::unique('users', 'email')
+                    ->ignore($user->id)
+                    ->whereNull('deleted_at'),
+            ];
+        }
 
         if ($request->has('role')) {
             $this->authorize('updateRole', $user);
