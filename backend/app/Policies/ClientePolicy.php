@@ -14,7 +14,7 @@ class ClientePolicy extends BasePermissionPolicy
             $user,
             $cliente->tipoAtendimento,
             'clientes.view'
-        );
+        ) && $this->isOwner($user, $cliente);
     }
 
     public function create(User $user, TipoAtendimento $tipo): bool
@@ -28,7 +28,7 @@ class ClientePolicy extends BasePermissionPolicy
             $user,
             $cliente->tipoAtendimento,
             'clientes.update'
-        );
+        ) && $this->isOwner($user, $cliente);
     }
 
     public function delete(User $user, Cliente $cliente): bool
@@ -37,6 +37,6 @@ class ClientePolicy extends BasePermissionPolicy
             $user,
             $cliente->tipoAtendimento,
             'clientes.delete'
-        );
+        ) && $this->isOwner($user, $cliente);
     }
 }

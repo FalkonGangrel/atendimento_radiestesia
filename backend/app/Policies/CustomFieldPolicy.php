@@ -6,36 +6,25 @@ use App\Models\User;
 use App\Models\CustomField;
 use App\Models\TipoAtendimento;
 
-class CustomFieldPolicy extends BasePolicy
+class CustomFieldPolicy extends BasePermissionPolicy
 {
-    public function viewAny(User $user): bool
+    public function viewAny(User $user, TipoAtendimento $tipo): bool
     {
-        return false; // só master passa pelo before
+        return $this->can($user, $tipo, 'custom_fields.view');
     }
 
-    public function create(User $user): bool
+    public function create(User $user, TipoAtendimento $tipo): bool
     {
-        return false;
+        return $this->can($user, $tipo, 'custom_fields.create');
     }
 
-    public function update(User $user, CustomField $customField): bool
+    public function update(User $user, CustomField $field, TipoAtendimento $tipo): bool
     {
-        return false;
+        return $this->can($user, $tipo, 'custom_fields.update');
     }
 
-    public function delete(User $user, CustomField $customField): bool
+    public function delete(User $user, CustomField $field, TipoAtendimento $tipo): bool
     {
-        return false;
-    }
-
-    public function viewInTipo(User $user, CustomField $field, TipoAtendimento $tipo): bool
-    {
-        // Primeiro verifica se tem permissão para o tipo
-        if (!$user->hasPermissionForTipo($tipo->id)) {
-            return false;
-        }
-
-        // Depois verifica se o campo está vinculado ao tipo
-        return $tipo->customFields()->where('custom_field_id', $field->id)->exists();
+        return $this->can($user, $tipo, 'custom_fields.delete');
     }
 }

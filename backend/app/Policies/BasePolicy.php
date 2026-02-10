@@ -15,7 +15,7 @@ abstract class BasePolicy
     public function before(User $user, string $ability): bool|null
     {
         // Master pode tudo
-        if ($user->role === 'master') {
+        if ($this->isAdmin($user)) {
             return true;
         }
 
