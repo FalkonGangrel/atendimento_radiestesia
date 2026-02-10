@@ -156,20 +156,10 @@ Route::middleware('auth:sanctum')->group(function () {
     );
 
     // ============================
-    // PERMISSÕES DE TIPO DE ATENDIMENTO (MASTER)
+    // PERMISSÕES POR TIPO DE ATENDIMENTO
     // ============================
     Route::get(
-        '/users/{userId}/tipos-atendimento/{tipoId}/permissions',
-        [TipoAtendimentoPermissionController::class, 'getUserPermissions']
-    )->middleware('permission:usuarios.manage');
-
-    Route::post(
-        '/users/{userId}/tipos-atendimento/{tipoId}/permissions/sync',
-        [TipoAtendimentoPermissionController::class, 'syncPermissions']
-    )->middleware('permission:usuarios.manage');
-
-    Route::get(
-        '/me/atendimento-permissions',
-        [TipoAtendimentoPermissionController::class, 'getMyPermissions']
+        '/tipos-atendimento/{tipo}/permissions',
+        [TipoAtendimentoPermissionController::class, 'show']
     );
 });

@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
             ListSeeder::class,
             ListItemSeeder::class,
             PermissionSeeder::class,
+            TipoAtendimentoSeeder::class,
+            UserTipoPermissionSeeder::class,
         ]);
     }
 }

@@ -23,9 +23,9 @@ return [
         'dashboard.view',
 
         // Tipos de Atendimento
-        'tipos-atendimento.view',
-        'tipos-atendimento.create',
-        'tipos-atendimento.update',
+        'tipos.view',
+        'tipos.create',
+        'tipos.update',
 
         // Listas
         'listas.view',
@@ -56,7 +56,7 @@ return [
         'clientes.update',
         'clientes.delete',
 
-        // Atendimentos (se aplicável depois)
+        // Atendimentos
         'atendimentos.view',
         'atendimentos.create',
         'atendimentos.update',
