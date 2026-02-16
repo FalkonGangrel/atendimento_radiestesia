@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminDashboardController;
 use App\Models\TemplateAtendimento;
 use App\Models\TipoAtendimento;
 
@@ -48,7 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard/stats', [DashboardController::class, 'stats'])
         ->middleware('permission:dashboard.master');
 
-    Route::get('/master/stats', [MasterController::class, 'stats'])
+    Route::get('/master/stats', [AdminDashboardController::class, 'stats'])
         ->middleware('permission:dashboard.master');
 
     // ============================
@@ -139,7 +140,8 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('permission:usuarios.delete');
 
     Route::post('/users/{id}/restore', [UserController::class, 'restore'])
-        ->middleware('permission:usuarios.restore');
+        ->middleware('permission:usuarios.restore')
+        ->withTrashed();
 
 
     // ============================

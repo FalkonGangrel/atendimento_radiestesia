@@ -20,6 +20,8 @@ class UserTipoPermissionController extends Controller
         TipoAtendimento $tipo,
         PermissionService $permissionService
     ) {
+        $this->authorize('manage-permissions');
+
         return response()->json([
             'user_id' => $user->id,
             'tipo_atendimento_id' => $tipo->id,

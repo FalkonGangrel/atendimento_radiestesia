@@ -17,12 +17,12 @@ class ClienteFactory extends Factory
     public function definition(): array
     {
         return [
-            'nome' => $this->faker->name(),
+            'name' => $this->faker->name(),
             'email' => $this->faker->unique()->safeEmail(),
-            'telefone' => $this->faker->phoneNumber(),
+            'phone' => $this->faker->phoneNumber(),
             'whatsapp' => $this->faker->phoneNumber(),
-            'data_nascimento' => $this->faker->date(),
-            'observacoes' => $this->faker->paragraph(),
+            'birth_date' => $this->faker->date(),
+            'observation' => $this->faker->paragraph(),
             'user_id' => \App\Models\User::factory(),
         ];
     }

@@ -11,12 +11,12 @@ return new class extends Migration
         Schema::create('clientes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('nome');
+            $table->string('name');
             $table->string('email')->nullable();
-            $table->string('telefone')->nullable();
+            $table->string('phone')->nullable();
             $table->string('whatsapp')->nullable();
-            $table->date('data_nascimento')->nullable();
-            $table->text('observacoes')->nullable();
+            $table->date('birth_date')->nullable();
+            $table->text('observation')->nullable();
             $table->timestamps();
             $table->index('user_id');
             $table->softDeletes();

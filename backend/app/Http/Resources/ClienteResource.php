@@ -11,13 +11,13 @@ class ClienteResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->nome,
+            'name' => $this->name,
             'email' => $this->email,
-            'telefone' => $this->telefone,
+            'phone' => $this->phone,
             'whatsapp' => $this->whatsapp,
-            'birth_date' => optional($this->data_nascimento)->format('Y-m-d'),
-            'observacoes' => $this->observacoes,
-            'active' => (bool) $this->ativo,
+            'birth_date' => optional($this->birth_date)->format('Y-m-d'),
+            'observation' => $this->observation,
+            'active' => (bool) is_null($this->deleted_at),
 
             'created_by' => $this->when(
                 $this->relationLoaded('atendente') && $this->atendente,

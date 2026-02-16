@@ -14,6 +14,11 @@ class TipoAtendimentoPolicy extends BasePermissionPolicy
             ->exists();
     }
 
+    public function viewPermissions(User $user, TipoAtendimento $tipo): bool
+    {
+        return $user->isMaster() || $user->isAdmin();
+    }
+
     public function attachToAtendimento(User $user, TipoAtendimento $tipo): bool
     {
         return $this->view($user, $tipo);

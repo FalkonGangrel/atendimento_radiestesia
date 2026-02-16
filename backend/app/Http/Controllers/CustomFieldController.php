@@ -8,21 +8,22 @@ use Illuminate\Http\Request;
 
 class CustomFieldController extends Controller
 {
+    public function __construct()
+    {
+        $this->authorizeResource(CustomField::class, 'field');
+    }
+
     public function index()
     {
-        $this->authorize('viewAny', CustomField::class);
-
-        $fields = CustomField::with('section')
-            ->orderBy('order')
-            ->get();
-
-        return response()->json($fields);
+        return response()->json(
+            CustomField::with('section')
+                ->orderBy('order')
+                ->get()
+        );
     }
 
     public function store(Request $request)
     {
-        $this->authorize('create', CustomField::class);
-
         $validated = $request->validate([
             'section_id' => 'required|exists:field_sections,id',
             'name' => 'required|string|max:255',
@@ -39,16 +40,12 @@ class CustomFieldController extends Controller
         return response()->json($field, 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, CustomField $field)
     {
-        $field = CustomField::findOrFail($id);
-
-        $this->authorize('update', $field);
-
         $validated = $request->validate([
             'section_id' => 'sometimes|required|exists:field_sections,id',
             'name' => 'sometimes|required|string|max:255',
-            'slug' => 'sometimes|required|string|max:255|unique:custom_fields,slug,' . $id,
+            'slug' => 'sometimes|required|string|max:255|unique:custom_fields,slug,' . $field->id,
             'type' => 'sometimes|required|in:text,number,checkbox,select,textarea,date',
             'options' => 'nullable|array',
             'order' => 'sometimes|integer|min:0',
@@ -56,18 +53,14 @@ class CustomFieldController extends Controller
             'active' => 'sometimes|boolean',
         ]);
 
-        CustomFieldService::updateField($id, $validated);
+        CustomFieldService::updateField($field->id, $validated);
 
         return response()->json($field->fresh());
     }
 
-    public function destroy($id)
+    public function destroy(CustomField $field)
     {
-        $field = CustomField::findOrFail($id);
-
-        $this->authorize('delete', $field);
-
-        CustomFieldService::deleteField($id);
+        CustomFieldService::deleteField($field->id);
 
         return response()->json(['message' => 'Campo deletado com sucesso']);
     }

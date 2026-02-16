@@ -8,21 +8,22 @@ use Illuminate\Http\Request;
 
 class FieldSectionController extends Controller
 {
+    public function __construct()
+    {
+        $this->authorizeResource(FieldSection::class, 'section');
+    }
+
     public function index()
     {
-        $this->authorize('viewAny', FieldSection::class);
-
-        $sections = FieldSection::with(['fields' => function ($query) {
-            $query->orderBy('order');
-        }])->orderBy('order')->get();
-
-        return response()->json($sections);
+        return response()->json(
+            FieldSection::with(['fields' => fn ($q) => $q->orderBy('order')])
+                ->orderBy('order')
+                ->get()
+        );
     }
 
     public function store(Request $request)
     {
-        $this->authorize('create', FieldSection::class);
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'required|string|max:255|unique:field_sections,slug',
@@ -35,31 +36,23 @@ class FieldSectionController extends Controller
         return response()->json($section, 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, FieldSection $section)
     {
-        $section = FieldSection::findOrFail($id);
-
-        $this->authorize('update', $section);
-
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
-            'slug' => 'sometimes|required|string|max:255|unique:field_sections,slug,' . $id,
+            'slug' => 'sometimes|required|string|max:255|unique:field_sections,slug,' . $section->id,
             'order' => 'sometimes|integer|min:0',
             'active' => 'sometimes|boolean',
         ]);
 
-        CustomFieldService::updateSection($id, $validated);
+        CustomFieldService::updateSection($section->id, $validated);
 
         return response()->json($section->fresh());
     }
 
-    public function destroy($id)
+    public function destroy(FieldSection $section)
     {
-        $section = FieldSection::findOrFail($id);
-
-        $this->authorize('delete', $section);
-
-        CustomFieldService::deleteSection($id);
+        CustomFieldService::deleteSection($section->id);
 
         return response()->json(['message' => 'Seção deletada com sucesso']);
     }

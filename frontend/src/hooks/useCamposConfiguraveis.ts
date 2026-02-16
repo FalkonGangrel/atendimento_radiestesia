@@ -20,13 +20,12 @@ export function useFieldSections() {
   return useQuery<FieldSection[], AxiosError>({
     queryKey: fieldSectionsQueryKeys.all,
     queryFn: async () => {
-      const { data } = await api.get<FieldSection[]>('/field-sections');
+      const { data } = await api.get('/field-sections');
       return data;
     },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
   });
 }
+
 
 /**
  * Cria uma nova seção de campos

@@ -24,10 +24,10 @@ class ClienteRequest extends FormRequest
                 'max:255',
                 Rule::unique('clientes', 'email')->ignore($cliente),
             ],
-            'telefone' => ['nullable', 'string', 'min:8', 'max:20'],
+            'phone' => ['nullable', 'string', 'min:8', 'max:20'],
             'whatsapp' => ['nullable', 'string', 'min:8', 'max:20'],
             'birth_date' => ['nullable', 'date'],
-            'observacoes' => ['nullable', 'string'],
+            'observation' => ['nullable', 'string'],
         ];
     }
 
@@ -37,15 +37,6 @@ class ClienteRequest extends FormRequest
             'name.required' => 'O nome é obrigatório',
             'name.min' => 'O nome deve ter no mínimo 3 caracteres',
             'email.email' => 'Informe um e-mail válido',
-        ];
-    }
-
-    public function attributes(): array
-    {
-        return [
-            'name' => 'nome',
-            'telefone' => 'telefone',
-            'data_nascimento' => 'data de nascimento',
         ];
     }
 }

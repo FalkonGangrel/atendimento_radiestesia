@@ -28,13 +28,19 @@ use App\Policies\UserPolicy;
 class AuthServiceProvider extends ServiceProvider
 {
     protected $policies = [
+
+        // Core domínio
         Cliente::class => ClientePolicy::class,
+        TemplateAtendimento::class => AtendimentoPolicy::class,
+        TipoAtendimento::class => TipoAtendimentoPolicy::class,
+
+        // Estrutura dinâmica
         CustomField::class => CustomFieldPolicy::class,
         FieldSection::class => FieldSectionPolicy::class,
         ListModel::class => ListPolicy::class,
         ListItem::class => ListItemPolicy::class,
-        TemplateAtendimento::class => AtendimentoPolicy::class,
-        TipoAtendimento::class => AtendimentoPolicy::class,
+
+        // Usuários
         User::class => UserPolicy::class,
     ];
 
@@ -42,31 +48,38 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        /**
-         * Gate permissão para master.
-         */
-        Gate::define('manage-permissions', function ($user) {
-            return $user->role === 'master';
+        /*
+        |--------------------------------------------------------------------------
+        | Dashboard comum (atendente)
+        |--------------------------------------------------------------------------
+        */
+        Gate::define('view-own-dashboard', function (User $user) {
+            return $user->hasPermission('dashboard.view');
         });
 
-        /**
-         * Gate genérico de permissão (permissions.php)
-         */
-        Gate::define('permission', function (User $user, string $permission) {
-            return $user->hasPermission($permission);
-        });
-
-        /**
-         * Dashboard master (mantido por clareza semântica)
-         */
-        Gate::define('view-dashboard', function (User $user) {
+        /*
+        |--------------------------------------------------------------------------
+        | Dashboard administrativo
+        |--------------------------------------------------------------------------
+        */
+        Gate::define('view-admin-dashboard', function (User $user) {
             return $user->hasPermission('dashboard.master');
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Gerenciar permissões
+        |--------------------------------------------------------------------------
+        */
+        Gate::define('manage-permissions', function (User $user) {
+            return $user->isMaster();
         });
 
         /**
          * Permissões de campos por usuário
          */
         Gate::define('manage-user-field-permissions', function (User $user, User $target) {
+
             if ($target->isMaster() && $user->id !== $target->id) {
                 return false;
             }

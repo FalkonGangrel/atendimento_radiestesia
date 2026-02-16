@@ -17,7 +17,7 @@ class TipoAtendimentoPermissionController extends Controller
         $user = $request->user();
 
         // Segurança: precisa ao menos visualizar o tipo
-        $this->authorize('viewAny', $tipo);
+        $this->authorize('viewPermissions', $tipo);
 
         $permissions = $this->permissionService
             ->resolve($user, $tipo);

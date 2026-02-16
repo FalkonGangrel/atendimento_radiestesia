@@ -142,7 +142,7 @@ export default function Usuarios() {
 
                   <td className="p-3">
                     {canManageUsuarios(authUser) &&
-                    authUser.id !== user.id ? (
+                    authUser?.id !== user.id ? (
                       <Select
                         value={editingData.role}
                         onValueChange={handleRoleChange}

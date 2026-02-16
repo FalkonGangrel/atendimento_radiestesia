@@ -144,9 +144,9 @@ export default function Clientes() {
                                             </p>
                                         )}
 
-                                        {cliente.telefone && (
+                                        {cliente.phone && (
                                             <p className="text-sm text-gray-600">
-                                                {cliente.telefone}
+                                                {cliente.phone}
                                             </p>
                                         )}
 

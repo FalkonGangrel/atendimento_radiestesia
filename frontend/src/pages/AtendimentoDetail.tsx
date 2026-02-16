@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import { Edit, ArrowLeft, CheckCircle, XCircle } from 'lucide-react'; // Importar CheckCircle e XCircle
-import type { Atendimento, AtendimentoItemDetail } from '@/types'; // Importar Atendimento e AtendimentoItemDetail
+import type { Atendimento, AtendimentoItem } from '@/types'; // Importar Atendimento e AtendimentoItem
 
 // Componente auxiliar para exibir campos booleanos de forma clara
 interface BooleanDisplayProps {
@@ -156,7 +156,7 @@ export default function AtendimentoDetail() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {atendimento.items && atendimento.items.length > 0 ? (
-                        atendimento.items.map((item: AtendimentoItemDetail) => (
+                        atendimento.items.map((item: AtendimentoItem) => (
                             <div
                                 key={item.id}
                                 className="p-3 border rounded-lg flex justify-between items-center"

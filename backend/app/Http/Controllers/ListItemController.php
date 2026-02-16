@@ -7,10 +7,13 @@ use Illuminate\Http\Request;
 
 class ListItemController extends Controller
 {
+    public function __construct()
+    {
+        $this->authorizeResource(ListItem::class, 'item');
+    }
+
     public function store(Request $request)
     {
-        $this->authorize('create', ListItem::class);
-
         $validated = $request->validate([
             'list_id' => 'required|exists:lists,id',
             'name' => 'required|string|max:255',
@@ -23,13 +26,8 @@ class ListItemController extends Controller
         return response()->json($item, 201);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, ListItem $item)
     {
-
-        $item = ListItem::findOrFail($id);
-
-        $this->authorize('update', $item);
-
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'has_quantity' => 'sometimes|boolean',
@@ -42,13 +40,8 @@ class ListItemController extends Controller
         return response()->json($item);
     }
 
-    public function destroy($id)
+    public function destroy(ListItem $item)
     {
-
-        $item = ListItem::findOrFail($id);
-
-        $this->authorize('delete', $item);
-
         $item->delete();
 
         return response()->json(['message' => 'Item deletado com sucesso']);

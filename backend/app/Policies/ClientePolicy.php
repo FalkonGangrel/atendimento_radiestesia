@@ -4,39 +4,56 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\Cliente;
-use App\Models\TipoAtendimento;
 
 class ClientePolicy extends BasePermissionPolicy
 {
-    public function view(User $user, Cliente $cliente): bool
+    public function viewAny(User $user): bool
     {
-        return $this->can(
-            $user,
-            $cliente->tipoAtendimento,
-            'clientes.view'
-        ) && $this->isOwner($user, $cliente);
+        // Se master, pode ver todos
+        if ($user->isMaster()) {
+            return true;
+        }
+
+        return $user->hasPermission('clientes.view');
     }
 
-    public function create(User $user, TipoAtendimento $tipo): bool
+    public function view(User $user, Cliente $cliente): bool
     {
-        return $this->can($user, $tipo, 'clientes.create');
+        if ($user->isMaster()) {
+            return true;
+        }
+
+        return $user->hasPermission('clientes.view')
+            && $cliente->user_id === $user->id;
+    }
+
+    public function create(User $user): bool
+    {
+        return $user->hasPermission('clientes.create');
     }
 
     public function update(User $user, Cliente $cliente): bool
     {
-        return $this->can(
-            $user,
-            $cliente->tipoAtendimento,
-            'clientes.update'
-        ) && $this->isOwner($user, $cliente);
+        if ($user->isMaster()) {
+            return true;
+        }
+
+        return $user->hasPermission('clientes.update')
+            && $cliente->user_id === $user->id;
     }
 
     public function delete(User $user, Cliente $cliente): bool
     {
-        return $this->can(
-            $user,
-            $cliente->tipoAtendimento,
-            'clientes.delete'
-        ) && $this->isOwner($user, $cliente);
+        if ($user->isMaster()) {
+            return true;
+        }
+
+        return $user->hasPermission('clientes.delete')
+            && $cliente->user_id === $user->id;
+    }
+
+    public function restore(User $user, Cliente $cliente): bool
+    {
+        return $user->isMaster();
     }
 }

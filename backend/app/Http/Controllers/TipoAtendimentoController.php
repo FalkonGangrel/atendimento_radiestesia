@@ -9,14 +9,20 @@ class TipoAtendimentoController extends Controller
 {
     public function index()
     {
-        $this->authorize('viewAny', TipoAtendimento::class);
+        $this->authorize('view', TipoAtendimento::class);
 
-        return response()->json(
-            TipoAtendimento::where('ativo', true)
-                ->orderBy('ordem')
-                ->orderBy('nome')
-                ->get()
-        );
+        $query = TipoAtendimento::where('ativo', true)
+            ->orderBy('ordem')
+            ->orderBy('nome');
+
+        if (!auth()->user()->isMaster()) {
+            $query->whereHas('userPermissions', function ($q) {
+                $q->where('user_id', auth()->id())
+                ->where('allowed', true);
+            });
+        }
+
+        return response()->json($query->get());
     }
 
     public function store(Request $request)

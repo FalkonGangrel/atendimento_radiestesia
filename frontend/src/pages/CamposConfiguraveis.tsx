@@ -1,35 +1,36 @@
 // src/pages/CamposConfiguraveis.tsx
-import React, { useState } from 'react';
-import {
-    useFieldSections,
-    useCreateFieldSection,
-    useDeleteFieldSection,
-    useCreateCustomField,
-    useDeleteCustomField,
-} from '@/hooks/useCamposConfiguraveis';
-import type { CustomFieldFormData, FieldSectionFormData } from '@/types';
 import {
     Button,
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
     Input,
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-    Card,
-    CardHeader,
-    CardTitle,
-    CardContent,
     Textarea, // Adicionado para campos de texto longo
 } from '@/components/ui'; // Ajuste o caminho conforme sua estrutura de UI
-import { Plus, Trash2 } from 'lucide-react';
+import {
+    useCreateCustomField,
+    useCreateFieldSection,
+    useDeleteCustomField,
+    useDeleteFieldSection,
+    useFieldSections,
+} from '@/hooks/useCamposConfiguraveis';
+import type { CustomFieldFormData, FieldSectionFormData } from '@/types';
 import { AxiosError } from 'axios'; // Importar AxiosError
+import { Plus, Trash2 } from 'lucide-react';
+import React, { useState } from 'react';
 
 // Definir os tipos de campo para o select (mantido para o estado do formulário)
 type CustomFieldType = 'text' | 'number' | 'checkbox' | 'select' | 'textarea' | 'date';
 
 export default function CamposConfiguraveis() {
     const { data: sections, isLoading, isError, error } = useFieldSections();
+    const axiosError = error as AxiosError<{ message?: string }> | null;
     const createSectionMutation = useCreateFieldSection();
     const deleteSectionMutation = useDeleteFieldSection();
     const createFieldMutation = useCreateCustomField();
@@ -96,7 +97,7 @@ export default function CamposConfiguraveis() {
             });
             setNewSectionFormData({ name: '', slug: '', active: true });
         } catch (err) {
-            const axiosErr = err as AxiosError;
+            const axiosErr = err as AxiosError<{ message?: string }>;
             setFormError(axiosErr.response?.data?.message || 'Erro ao criar seção. Verifique se o slug já existe.');
         }
     };
@@ -118,9 +119,13 @@ export default function CamposConfiguraveis() {
             const fieldPayload = {
                 ...newFieldFormData,
                 section_id: newFieldFormData.section_id!, // Garantido por validação
-                options: newFieldFormData.type === 'select'
-                    ? newFieldFormData.options.split(',').map(o => o.trim()).filter(o => o !== '')
-                    : null,
+                options:
+                    newFieldFormData.type === 'select'
+                        ? newFieldFormData.options
+                            .split(',')
+                            .map(o => o.trim())
+                            .filter(o => o !== '')
+                        : undefined,
                 order: sections?.find(s => s.id === newFieldFormData.section_id)?.fields?.length || 0,
             };
             await createFieldMutation.mutateAsync(fieldPayload);
@@ -134,7 +139,7 @@ export default function CamposConfiguraveis() {
                 active: true,
             });
         } catch (err) {
-            const axiosErr = err as AxiosError;
+            const axiosErr = err as AxiosError<{ message?: string }>;
             setFormError(axiosErr.response?.data?.message || 'Erro ao criar campo. Verifique se o slug já existe na seção.');
         }
     };
@@ -145,19 +150,23 @@ export default function CamposConfiguraveis() {
         try {
             await deleteSectionMutation.mutateAsync(sectionId);
         } catch (err) {
-            const axiosErr = err as AxiosError;
+            const axiosErr = err as AxiosError<{ message?: string }>;
             setFormError(axiosErr.response?.data?.message || 'Erro ao deletar seção. Verifique se não há atendimentos vinculados.');
         }
     };
 
-    const handleDeleteField = async (fieldId: number, sectionId: number) => {
+    const handleDeleteField = async (fieldId: number) => {
         if (!confirm('Tem certeza que deseja deletar este campo?')) return;
         setFormError(null);
+
         try {
-            await deleteFieldMutation.mutateAsync({ fieldId, sectionId });
+            await deleteFieldMutation.mutateAsync(fieldId);
         } catch (err) {
-            const axiosErr = err as AxiosError;
-            setFormError(axiosErr.response?.data?.message || 'Erro ao deletar campo. Verifique se não há atendimentos vinculados.');
+            const axiosErr = err as AxiosError<{ message?: string }>;
+            setFormError(
+                axiosErr.response?.data?.message ||
+                'Erro ao deletar campo. Verifique se não há atendimentos vinculados.'
+            );
         }
     };
 
@@ -172,7 +181,10 @@ export default function CamposConfiguraveis() {
     if (isError) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <div className="text-red-500">Erro ao carregar dados: {error?.message || 'Erro desconhecido'}</div>
+                <div className="text-red-500">
+                    Erro ao carregar dados:{' '}
+                    {axiosError?.response?.data?.message || axiosError?.message || 'Erro desconhecido'}
+                </div>
             </div>
         );
     }
@@ -187,11 +199,7 @@ export default function CamposConfiguraveis() {
                 </div>
 
                 {/* Error Message */}
-                {(formError || isError) && (
-                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-                        {formError || error?.message || 'Ocorreu um erro.'}
-                    </div>
-                )}
+                {formError || axiosError?.response?.data?.message || axiosError?.message || 'Ocorreu um erro.'}
 
                 {/* Tabs */}
                 <div className="flex gap-4 mb-6">
@@ -278,7 +286,7 @@ export default function CamposConfiguraveis() {
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="sm"
-                                                                    onClick={() => handleDeleteField(field.id, section.id)}
+                                                                    onClick={() => handleDeleteField(field.id)}
                                                                     disabled={deleteFieldMutation.isPending}
                                                                 >
                                                                     <Trash2 className="w-4 h-4 text-red-600" />
@@ -416,7 +424,7 @@ export default function CamposConfiguraveis() {
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                onClick={() => handleDeleteField(field.id, section.id)}
+                                                                onClick={() => handleDeleteField(field.id)}
                                                                 disabled={deleteFieldMutation.isPending}
                                                             >
                                                                 <Trash2 className="w-4 h-4 text-red-600" />

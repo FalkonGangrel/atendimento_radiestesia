@@ -153,12 +153,12 @@ export default function ClienteDetail() {
                 </div>
               )}
 
-              {cliente.telefone && (
+              {cliente.phone && (
                 <div className="flex items-center gap-3">
                   <Phone className="w-5 h-5 text-gray-400" />
                   <div>
                     <p className="text-sm text-gray-600">Telefone</p>
-                    <p className="font-medium">{cliente.telefone}</p>
+                    <p className="font-medium">{cliente.phone}</p>
                   </div>
                 </div>
               )}
@@ -189,14 +189,14 @@ export default function ClienteDetail() {
             </CardContent>
           </Card>
 
-          {cliente.observacoes && (
+          {cliente.observation && (
             <Card>
               <CardHeader>
                 <CardTitle>Observações</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-gray-700 whitespace-pre-wrap">
-                  {cliente.observacoes}
+                  {cliente.observation}
                 </p>
               </CardContent>
             </Card>

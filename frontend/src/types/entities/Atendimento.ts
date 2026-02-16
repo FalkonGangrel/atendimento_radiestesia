@@ -15,7 +15,7 @@ export interface Atendimento {
   has_directives: boolean;
   has_ancestralidade: boolean;
   has_rco: boolean;
-  custom_data: Record<string, unknown>;
+  custom_data: Record<string, string | number | boolean | null>;
   status: 'em_andamento' | 'concluido' | 'cancelado';
   tipo_atendimento_id: number;
   tipo_atendimento?: TipoAtendimento;

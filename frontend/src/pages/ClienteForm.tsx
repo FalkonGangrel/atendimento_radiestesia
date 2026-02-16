@@ -1,16 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { api } from '@/lib/api';
-import { useAuth } from '@/contexts/'
-import { Permissions } from '@/constants/permissions';
-import type { ClienteFormData } from '@/types'; // Importar ClienteFormData
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea'; // Importar Textarea
-import { ArrowLeft } from 'lucide-react';
-import { useClienteForm } from '@/hooks/useClientes'; // Usar o hook useClienteForm
+import { Permissions } from '@/constants/permissions';
+import { useAuth } from '@/contexts/';
+import { useClienteForm, useSaveCliente } from '@/hooks/useClientes'; // Usar o hook useClienteForm
+import type { ClienteFormData } from '@/types'; // Importar ClienteFormData
 import { AxiosError } from 'axios';
+import { ArrowLeft } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export default function ClienteForm() {
     const navigate = useNavigate();
@@ -20,6 +19,8 @@ export default function ClienteForm() {
 
     // Usar useClienteForm para carregar dados na edição
     const { data: clienteData, isLoading: isLoadingCliente, isError: isErrorCliente, error: clienteError } = useClienteForm(id ? Number(id) : undefined);
+    const saveCliente = useSaveCliente();
+
 
     const [isSaving, setIsSaving] = useState(false); // Estado para o salvamento do formulário
     const [submitError, setSubmitError] = useState<string | null>(null); // Erro específico de submissão
@@ -27,10 +28,10 @@ export default function ClienteForm() {
     const [formData, setFormData] = useState<ClienteFormData>({
         name: '',
         email: null,
-        telefone: null,
+        phone: null,
         whatsapp: null,
         birth_date: null,
-        observacoes: null,
+        observation: null,
     });
 
 
@@ -40,10 +41,10 @@ export default function ClienteForm() {
             setFormData({
                 name: clienteData.name,
                 email: clienteData.email ?? null,
-                telefone: clienteData.telefone ?? null,
+                phone: clienteData.phone ?? null,
                 whatsapp: clienteData.whatsapp ?? null,
                 birth_date: clienteData.birth_date ?? null,
-                observacoes: clienteData.observacoes ?? null,
+                observation: clienteData.observation ?? null,
             });
         }
     }, [isEditing, clienteData]);
@@ -61,31 +62,27 @@ export default function ClienteForm() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitError(null);
-        setIsSaving(true);
 
-        // Validação básica
         if (!formData.name.trim()) {
             setSubmitError('O nome do cliente é obrigatório.');
-            setIsSaving(false);
             return;
         }
 
         try {
-            if (isEditing) {
-                await api.put(`/clientes/${id}`, formData);
-            } else {
-                await api.post('/clientes', formData);
-            }
-            navigate('/clientes');
+            setIsSaving(true);
+
+            await saveCliente.mutateAsync({
+                id: isEditing ? Number(id) : undefined,
+                data: formData,
+            });
+
+            navigate('/clientes', { replace:true });
         } catch (err) {
             if (err instanceof AxiosError) {
                 setSubmitError(err.response?.data?.message || 'Erro ao salvar cliente');
             } else {
                 setSubmitError('Erro ao salvar cliente');
             }
-            console.error(err);
-        } finally {
-            setIsSaving(false);
         }
     };
 
@@ -187,13 +184,13 @@ export default function ClienteForm() {
                             {/* Telefone e WhatsApp */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium mb-2" htmlFor="telefone">
+                                    <label className="block text-sm font-medium mb-2" htmlFor="phone">
                                         Telefone
                                     </label>
                                     <Input
-                                        id="telefone"
-                                        name="telefone"
-                                        value={formData.telefone || ''}
+                                        id="phone"
+                                        name="phone"
+                                        value={formData.phone || ''}
                                         onChange={handleInputChange}
                                         placeholder="(00) 00000-0000"
                                     />
@@ -226,14 +223,14 @@ export default function ClienteForm() {
                             </div>
                             {/* Observações */}
                             <div>
-                                <label className="block text-sm font-medium mb-2" htmlFor="observacoes">
+                                <label className="block text-sm font-medium mb-2" htmlFor="observation">
                                     Observações
                                 </label>
                                 <Textarea // Usando o componente Textarea
-                                    id="observacoes"
-                                    name="observacoes"
+                                    id="observation"
+                                    name="observation"
                                     className="w-full min-h-[100px]"
-                                    value={formData.observacoes || ''}
+                                    value={formData.observation || ''}
                                     onChange={handleInputChange}
                                     placeholder="Informações adicionais sobre o cliente..."
                                 />

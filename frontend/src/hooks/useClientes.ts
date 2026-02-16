@@ -56,10 +56,10 @@ export const useClienteForm = (id?: number) => {
             return {
                 name: cliente.name,
                 email: cliente.email ?? null,
-                telefone: cliente.telefone ?? null,
+                phone: cliente.phone ?? null,
                 whatsapp: cliente.whatsapp ?? null,
                 birth_date: cliente.birth_date ?? null,
-                observacoes: cliente.observacoes ?? null,
+                observation: cliente.observation ?? null,
             };
         },
         enabled: !!id,
@@ -80,7 +80,6 @@ export const useSaveCliente = () => {
         mutationFn: async ({ id, data }) => {
             const payload = {
                 ...data,
-                data_nascimento: data.birth_date,
             };
 
             if (id) {

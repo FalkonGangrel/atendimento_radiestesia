@@ -1,3 +1,5 @@
+import type { FieldSection } from './FieldSection';
+
 export interface CustomField {
   id: number;
   section_id: number;
@@ -10,4 +12,6 @@ export interface CustomField {
   active: boolean;
   created_at: string;
   updated_at: string;
+
+  section?: FieldSection;
 }

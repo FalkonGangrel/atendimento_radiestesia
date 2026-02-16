@@ -7,27 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Importar componentes Select
 import { Textarea } from '@/components/ui/textarea'; // Usar Textarea do shadcn/ui
-import type { Atendimento, AtendimentoFormData, CustomField, TipoAtendimento, ListModel, ListItem, FieldSection } from '@/types'; // Importar todos os tipos necessários
+import type { AtendimentoFormData, CustomField, TipoAtendimento, ListItem } from '@/types'; // Importar todos os tipos necessários
 import { AxiosError } from 'axios';
-
-// Definir AtendimentoFormData com tipo_atendimento_id
-export interface AtendimentoFormData {
-    patient_name: string;
-    birth_date: string;
-    attendance_date: string;
-    treatment_focus: string | null;
-    observations: string | null;
-    tables_needed: number | null;
-    lines_to_clean: number | null;
-    fractals_percent: number | null;
-    treatment_duration_days: number | null;
-    has_directives: boolean;
-    has_ancestralidade: boolean;
-    has_rco: boolean;
-    tipo_atendimento_id: number | undefined; // Adicionado
-    custom_data: Record<string, any>; // Pode ser mais específico se souber os tipos
-    items: { list_item_id: number; quantity: number | undefined }[];
-}
 
 export default function AtendimentoForm() {
     const { id } = useParams();
@@ -42,12 +23,12 @@ export default function AtendimentoForm() {
         patient_name: '',
         birth_date: '',
         attendance_date: new Date().toISOString().split('T')[0],
-        treatment_focus: null, // Inicializado como null
-        observations: null, // Inicializado como null
-        tables_needed: null,
-        lines_to_clean: null,
-        fractals_percent: null,
-        treatment_duration_days: null,
+        treatment_focus: '', // Inicializado como null
+        observations: '', // Inicializado como null
+        tables_needed: 0,
+        lines_to_clean: 0,
+        fractals_percent: 0,
+        treatment_duration_days: 0,
         has_directives: false,
         has_ancestralidade: false,
         has_rco: false,
@@ -255,7 +236,15 @@ export default function AtendimentoForm() {
 
     // Renderizar campo dinâmico baseado no tipo
     const renderCustomField = (field: CustomField) => {
-        const value = formData.custom_data?.[field.slug];
+        const rawValue = formData.custom_data[field.slug];
+
+        const value =
+            typeof rawValue === 'string' || typeof rawValue === 'number'
+                ? rawValue
+                : '';
+
+        const checked = typeof rawValue === 'boolean' ? rawValue : false;
+
         const commonProps = {
             name: field.slug,
             onChange: (e: any) => updateCustomField(field.slug, e.target.value),
@@ -279,7 +268,7 @@ export default function AtendimentoForm() {
                 return (
                     <input
                         type="checkbox"
-                        checked={value || false}
+                        checked={checked}
                         onChange={(e) => updateCustomField(field.slug, e.target.checked)}
                         className="w-4 h-4"
                         {...(field.is_required && { required: true })} // Adiciona required apenas se for true
@@ -288,7 +277,7 @@ export default function AtendimentoForm() {
             case 'select':
                 return (
                     <Select
-                        value={value || ''}
+                        value={typeof value === 'string' ? value : String(value ?? '')}
                         onValueChange={(val) => updateCustomField(field.slug, val)}
                         required={field.is_required}
                     >
@@ -361,7 +350,7 @@ export default function AtendimentoForm() {
                             <SelectContent>
                                 {availableTipos.map((tipo) => (
                                     <SelectItem key={tipo.id} value={tipo.id.toString()}>
-                                        {tipo.name}
+                                        {tipo.nome}
                                     </SelectItem>
                                 ))}
                             </SelectContent>

@@ -15,17 +15,17 @@ class Cliente extends Model
     protected $table = 'clientes';
 
     protected $fillable = [
-        'nome',
+        'name',
         'email',
-        'telefone',
+        'phone',
         'whatsapp',
-        'data_nascimento',
-        'observacoes',
+        'birth_date',
+        'observation',
         'user_id',
     ];
 
     protected $casts = [
-        'data_nascimento' => 'date',
+        'birth_date' => 'date',
     ];
 
     public function atendente(): BelongsTo
@@ -37,4 +37,14 @@ class Cliente extends Model
     {
         return $this->hasMany(TemplateAtendimento::class, 'cliente_id');
     }
+
+    public function scopeOwnedBy($query, $user)
+    {
+        if ($user->is_master) {
+            return $query;
+        }
+
+        return $query->where('user_id', $user->id);
+    }
+
 }

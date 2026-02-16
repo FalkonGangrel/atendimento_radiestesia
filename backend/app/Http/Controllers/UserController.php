@@ -76,10 +76,8 @@ class UserController extends Controller
         return response()->json(['message' => 'Usuário deletado com sucesso']);
     }
 
-    public function restore($id)
+    public function restore(User $user)
     {
-        $user = User::withTrashed()->findOrFail($id);
-
         $this->authorize('restore', $user);
 
         $user->restore();

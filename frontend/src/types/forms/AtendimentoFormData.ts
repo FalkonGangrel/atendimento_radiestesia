@@ -3,11 +3,11 @@ export interface AtendimentoFormData {
     birth_date: string;
     attendance_date: string;
     treatment_focus: string;
-    observations: string;
-    tables_needed?: number;
-    lines_to_clean?: number;
-    fractals_percent?: number;
-    treatment_duration_days?: number;
+    observations: string | null;
+    tables_needed: number | null;
+    lines_to_clean: number | null;
+    fractals_percent: number | null;
+    treatment_duration_days: number | null;
     has_directives: boolean;
     has_ancestralidade: boolean;
     has_rco: boolean;

@@ -2,7 +2,7 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '@/contexts/'
 
 interface RequireRoleProps {
-  roles: Array<'master' | 'atendente'>
+  roles: Array<'master' | 'admin' | 'atendente'>
 }
 
 export default function RequireRole({ roles }: RequireRoleProps) {

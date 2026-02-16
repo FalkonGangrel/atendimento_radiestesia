@@ -2,10 +2,10 @@ export interface Cliente {
     id: number;
     name: string;
     email?: string | null;
-    telefone?: string | null;
+    phone?: string | null;
     whatsapp?: string | null;
     birth_date?: string | null;
-    observacoes?: string | null;
+    observation?: string | null;
     deleted_at: string | null;
 
     created_by?: {

@@ -52,7 +52,9 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $request->email)
+            ->whereNull('deleted_at')
+            ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
@@ -112,12 +114,7 @@ class AuthController extends Controller
         $user = $request->user();
 
         return response()->json([
-            'user' => [
-                'id' => $request->user()->id,
-                'name' => $request->user()->name,
-                'email' => $request->user()->email,
-                'role' => $request->user()->role,
-            ],
+            'user' => $user->only('id', 'name', 'email', 'role'),
         ]);
     }
 

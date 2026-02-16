@@ -5,15 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\TemplateAtendimento;
 use App\Models\AtendimentoItem;
 use App\Models\TipoAtendimento;
+use App\Models\Cliente;
 use Illuminate\Http\Request;
 
 class AtendimentoController extends Controller
 {
     public function index(Request $request)
     {
-        $tipo = TipoAtendimento::findOrFail(
-            $request->get('tipo_atendimento_id')
-        );
+        $tipo = TipoAtendimento::where('id', $request->get('tipo_atendimento_id'))
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
 
         $this->authorize('viewAny', [TemplateAtendimento::class, $tipo]);
 
@@ -26,7 +27,9 @@ class AtendimentoController extends Controller
 
     public function store(Request $request)
     {
-        $tipo = TipoAtendimento::findOrFail($request->tipo_atendimento_id);
+        $tipo = TipoAtendimento::where('id', $request->tipo_atendimento_id)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
 
         $this->authorize('create', $tipo);
 
@@ -39,19 +42,30 @@ class AtendimentoController extends Controller
             'items' => 'nullable|array',
         ]);
 
+        // 🔒 Proteção extra para cliente
+        if (!empty($validated['cliente_id'])) {
+            $cliente = Cliente::where('id', $validated['cliente_id'])
+                ->where('user_id', $request->user()->id)
+                ->where('tipo_atendimento_id', $tipo->id)
+                ->firstOrFail();
+        }
+
         $validated['user_id'] = $request->user()->id;
         $validated['tipo_atendimento_id'] = $tipo->id;
 
         $atendimento = TemplateAtendimento::create($validated);
 
+        // 🔒 Validar itens contra o tipo
         if (is_array($request->items)) {
+
             $itensPermitidos = $tipo->listItems()
                 ->pluck('list_items.id')
                 ->toArray();
 
             foreach ($request->items as $item) {
+
                 if (!in_array($item['list_item_id'], $itensPermitidos)) {
-                    abort(403, 'Item não permitido');
+                    abort(403, 'Item não permitido para este tipo de atendimento');
                 }
 
                 AtendimentoItem::create([
