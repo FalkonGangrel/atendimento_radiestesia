@@ -18,6 +18,7 @@ return new class extends Migration
             $table->boolean('ativo')->default(true);
             $table->integer('ordem')->default(0); // Para ordenação
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index('slug');
         });

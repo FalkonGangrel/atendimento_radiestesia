@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_tipo_permissions', function (Blueprint $table) {
+        Schema::create('user_tipo_atendimento_permissions', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -36,6 +36,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_tipo_permissions');
+        Schema::dropIfExists('user_tipo_atendimento_permissions');
     }
 };

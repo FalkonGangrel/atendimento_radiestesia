@@ -7,6 +7,11 @@ use App\Models\TipoAtendimento;
 
 class TipoAtendimentoPolicy extends BasePermissionPolicy
 {
+    public function viewAny(User $user): bool
+    {
+        return $user->isMaster() || $user->isAdmin();
+    }
+
     public function view(User $user, TipoAtendimento $tipo): bool
     {
         return $user->tiposAtendimentoPermitidos()
@@ -23,4 +28,21 @@ class TipoAtendimentoPolicy extends BasePermissionPolicy
     {
         return $this->view($user, $tipo);
     }
+
+    public function delete(User $user, TipoAtendimento $tipo)
+    {
+        return $user->isMaster() || $user->isAdmin();
+    }
+
+    public function use(User $user, TipoAtendimento $tipo): bool
+    {
+        if ($user->isMaster()) return true;
+
+        return $tipo->permissions()
+            ->where('user_id', $user->id)
+            ->whereHas('permission', fn($q) => $q->where('slug', 'use'))
+            ->where('allowed', true)
+            ->exists();
+    }
+
 }

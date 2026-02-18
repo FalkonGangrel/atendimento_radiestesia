@@ -3,46 +3,34 @@
 namespace App\Http\Controllers;
 
 use App\Models\TipoAtendimento;
+use App\Http\Requests\StoreTipoAtendimentoRequest;
+use App\Http\Resources\TipoAtendimentoResource;
+use App\Http\Resources\TipoAtendimentoEstruturaResource;
+use App\Services\TipoAtendimentoService;
 use Illuminate\Http\Request;
 
 class TipoAtendimentoController extends Controller
 {
     public function index()
     {
-        $this->authorize('view', TipoAtendimento::class);
+        $this->authorize('viewAny', TipoAtendimento::class);
 
-        $query = TipoAtendimento::where('ativo', true)
+        $tipos = TipoAtendimento::where('ativo', true)
             ->orderBy('ordem')
-            ->orderBy('nome');
+            ->orderBy('nome')
+            ->get();
 
-        if (!auth()->user()->isMaster()) {
-            $query->whereHas('userPermissions', function ($q) {
-                $q->where('user_id', auth()->id())
-                ->where('allowed', true);
-            });
-        }
-
-        return response()->json($query->get());
+        return TipoAtendimentoResource::collection($tipos);
     }
 
-    public function store(Request $request)
+
+    public function store(StoreTipoAtendimentoRequest $request)
     {
-        $this->authorize('create', TipoAtendimento::class);
+        $tipo = TipoAtendimento::create($request->validated());
 
-        $tipo = TipoAtendimento::create(
-            $request->validate([
-                'nome' => 'required|string|max:255',
-                'slug' => 'required|string|max:255|unique:tipos_atendimento,slug',
-                'descricao' => 'nullable|string',
-                'valor' => 'required|numeric|min:0',
-                'duracao_minutos' => 'nullable|integer|min:0',
-                'ativo' => 'boolean',
-                'ordem' => 'integer|min:0',
-            ])
-        );
-
-        return response()->json($tipo, 201);
+        return new TipoAtendimentoResource($tipo);
     }
+
 
     public function show(TipoAtendimento $tipoAtendimento)
     {
@@ -78,4 +66,16 @@ class TipoAtendimentoController extends Controller
 
         return response()->json(['message' => 'Tipo de atendimento deletado com sucesso']);
     }
+
+    public function estrutura(
+        TipoAtendimento $tipo,
+        TipoAtendimentoService $service
+    ) {
+        $this->authorize('use', $tipo);
+
+        $tipo = $service->carregarEstrutura($tipo);
+
+        return new TipoAtendimentoEstruturaResource($tipo);
+    }
+
 }

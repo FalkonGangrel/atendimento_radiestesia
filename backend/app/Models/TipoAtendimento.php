@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TipoAtendimento extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'tipos_atendimento';
 
@@ -65,4 +66,20 @@ class TipoAtendimento extends Model
         return $this->belongsToMany(ListItem::class, 'tipo_atendimento_list_item')
             ->withTimestamps();
     }
+
+    public function permissions()
+    {
+        return $this->hasMany(UserTipoAtendimentoPermission::class);
+    }
+
+    public function scopeAtivo($query)
+    {
+        return $query->where('ativo', true);
+    }
+
+    public function scopeOrdenado($query)
+    {
+        return $query->orderBy('ordem')->orderBy('nome');
+    }
+
 }

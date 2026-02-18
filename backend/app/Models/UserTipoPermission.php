@@ -10,7 +10,7 @@ class UserTipoPermission extends Model
 {
     use HasFactory;
 
-    protected $table = 'user_tipo_permissions';
+    protected $table = 'user_tipo_atendimento_permissions';
 
     protected $fillable = [
         'user_id',
