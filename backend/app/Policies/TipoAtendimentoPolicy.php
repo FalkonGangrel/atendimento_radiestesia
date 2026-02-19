@@ -45,4 +45,9 @@ class TipoAtendimentoPolicy extends BasePermissionPolicy
             ->exists();
     }
 
+    public function create(User $user, TipoAtendimento $tipo): bool
+    {
+        return $this->can($user, $tipo, 'atendimentos.create');
+    }
+
 }

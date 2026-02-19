@@ -6,12 +6,12 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 // Models
+use App\Models\Atendimento;
 use App\Models\Cliente;
 use App\Models\CustomField;
 use App\Models\FieldSection;
 use App\Models\ListModel;
 use App\Models\ListItem;
-use App\Models\TemplateAtendimento;
 use App\Models\TipoAtendimento;
 use App\Models\User;
 
@@ -31,7 +31,7 @@ class AuthServiceProvider extends ServiceProvider
 
         // Core domínio
         Cliente::class => ClientePolicy::class,
-        TemplateAtendimento::class => AtendimentoPolicy::class,
+        Atendimento::class => AtendimentoPolicy::class,
         TipoAtendimento::class => TipoAtendimentoPolicy::class,
 
         // Estrutura dinâmica

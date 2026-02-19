@@ -37,6 +37,12 @@ export function formatDateTime(date: string | Date | null | undefined): string {
     return d.toLocaleString('pt-BR');
 }
 
+export function formatDateSimple(date: string | Date | null | undefined): string {
+    if (!date) return '';
+
+    return date.toString().split('-').reverse().join('/');
+}
+
 // Formata moeda brasileira: R$ 1.500,00
 export function formatCurrency(value: string | number | null | undefined): string {
     if (value === null || value === undefined) return 'R$&nbsp;0,00';

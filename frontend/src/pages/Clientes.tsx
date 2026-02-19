@@ -1,18 +1,21 @@
-import { useNavigate } from 'react-router-dom';
-import { api } from '@/lib/api';
-import { useAuth } from '@/contexts';
-import { Permissions } from '@/constants/permissions';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Plus, Edit, Eye, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Permissions } from '@/constants/permissions';
+import { useAuth } from '@/contexts';
 import { useClientesList } from '@/hooks/useClientes';
+import { api } from '@/lib/api';
+import { formatDate } from '@/lib/utils';
+import AtendimentoModal from '@/modules/atendimento/components/AtendimentoModal';
+import { Edit, Eye, MessageSquare, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Clientes() {
     const navigate = useNavigate();
     const { hasPermission } = useAuth();
     const { data: clientes, isLoading, isError, error, refetch } = useClientesList();
     const [deleteError, setDeleteError] = useState<string | null>(null);
+    const [clienteHistoricoId, setClienteHistoricoId] = useState<number | null>(null);
 
     const handleDelete = async (id: number) => {
         if (!confirm('Tem certeza que deseja desativar este cliente?')) return;
@@ -134,6 +137,16 @@ export default function Clientes() {
                                                     <Trash2 className="w-4 h-4" />
                                                 </Button>
                                             )}
+
+                                            {hasPermission(Permissions.CLIENTES_UPDATE) && (
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    onClick={() => setClienteHistoricoId(cliente.id)}
+                                                >
+                                                    <MessageSquare className="w-4 h-4" />
+                                                </Button>
+                                            )}
                                         </div>
                                     </CardHeader>
 
@@ -148,6 +161,31 @@ export default function Clientes() {
                                             <p className="text-sm text-gray-600">
                                                 {cliente.phone}
                                             </p>
+                                        )}
+
+                                        {/* Último Atendimento */}
+                                        {cliente.ultimo_atendimento && (
+                                            <div className="pt-2 mt-2 border-t">
+                                                <p className="text-xs text-gray-500">
+                                                    Último Atendimento:
+                                                </p>
+
+                                                <p className="text-sm font-medium text-gray-700">
+                                                    {formatDate(cliente.ultimo_atendimento)}
+                                                </p>
+
+                                                {cliente.data_retorno && (
+                                                    <p className="text-xs text-blue-600">
+                                                        Retorno: {formatDate(cliente.data_retorno)}
+                                                    </p>
+                                                )}
+
+                                                {cliente.observacao_resumo && (
+                                                    <p className="text-xs text-gray-500 italic">
+                                                        {cliente.observacao_resumo}
+                                                    </p>
+                                                )}
+                                            </div>
                                         )}
 
                                         {/* 🔐 Apenas quem pode ver o dono */}
@@ -184,6 +222,13 @@ export default function Clientes() {
                     </Card>
                 )}
             </div>
+            {clienteHistoricoId && (
+                <AtendimentoModal
+                    clienteId={clienteHistoricoId}
+                    open={!!clienteHistoricoId}
+                    onClose={() => setClienteHistoricoId(null)}
+                />
+            )}
         </div>
     );
 }

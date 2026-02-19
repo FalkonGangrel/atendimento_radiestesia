@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Str;
 
 class ClienteResource extends JsonResource
 {
@@ -26,6 +27,19 @@ class ClienteResource extends JsonResource
                     'name' => $this->atendente->name,
                     'email' => $this->atendente->email,
                 ]
+            ),
+
+            'ultimo_atendimento' => optional(
+                $this->atendimentos()->latest('data_atendimento')->first()
+            )?->data_atendimento,
+
+            'data_retorno' => optional(
+                $this->atendimentos()->latest('data_atendimento')->first()
+            )?->data_retorno,
+
+            'observacao_resumo' => Str::limit(
+                optional($this->atendimentos()->latest('data_atendimento')->first())?->observacao,
+                30
             ),
         ];
     }

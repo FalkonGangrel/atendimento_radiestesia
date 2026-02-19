@@ -35,7 +35,7 @@ class Cliente extends Model
 
     public function atendimentos(): HasMany
     {
-        return $this->hasMany(TemplateAtendimento::class, 'cliente_id');
+        return $this->hasMany(Atendimento::class, 'cliente_id');
     }
 
     public function scopeOwnedBy($query, $user)

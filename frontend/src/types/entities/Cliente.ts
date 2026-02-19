@@ -8,6 +8,10 @@ export interface Cliente {
     observation?: string | null;
     deleted_at: string | null;
 
+    ultimo_atendimento?: string | null;
+    data_retorno?: string | null;
+    observacao_resumo?: string | null;
+
     created_by?: {
         id: number;
         name: string;

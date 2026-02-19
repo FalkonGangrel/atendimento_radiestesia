@@ -37,13 +37,11 @@ class User extends Authenticatable
     |  -----------------------------------------------------------------
      */
 
-    public function tiposAtendimentoPermitidos(): BelongsToMany
+    public function tipoAtendimentoPermissions()
     {
-        return $this->belongsToMany(
-            TipoAtendimento::class,
-            'user_tipo_atendimento_permissions'
-        )->withTimestamps();
+        return $this->hasMany(UserTipoAtendimentoPermission::class);
     }
+
 
     public function tipoPermissions(): HasMany
     {

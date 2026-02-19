@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Atendimento;
 use App\Models\TemplateAtendimento;
-use App\Models\AtendimentoItem;
 use App\Models\TipoAtendimento;
-use App\Models\Cliente;
+use App\Http\Requests\StoreAtendimentoRequest;
+use App\Http\Resources\AtendimentoResource;
 use Illuminate\Http\Request;
 
 class AtendimentoController extends Controller
@@ -25,58 +26,15 @@ class AtendimentoController extends Controller
             ->get();
     }
 
-    public function store(Request $request)
+    public function store(StoreAtendimentoRequest $request)
     {
-        $tipo = TipoAtendimento::where('id', $request->tipo_atendimento_id)
-            ->where('user_id', $request->user()->id)
-            ->firstOrFail();
+        $data = $request->validated();
 
-        $this->authorize('create', $tipo);
+        $data['user_id'] = auth()->id();
 
-        $validated = $request->validate([
-            'cliente_id' => 'nullable|exists:clientes,id',
-            'patient_name' => 'required|string|max:255',
-            'birth_date' => 'required|date',
-            'attendance_date' => 'required|date',
-            'custom_data' => 'nullable|array',
-            'items' => 'nullable|array',
-        ]);
+        $atendimento = Atendimento::create($data);
 
-        // 🔒 Proteção extra para cliente
-        if (!empty($validated['cliente_id'])) {
-            $cliente = Cliente::where('id', $validated['cliente_id'])
-                ->where('user_id', $request->user()->id)
-                ->where('tipo_atendimento_id', $tipo->id)
-                ->firstOrFail();
-        }
-
-        $validated['user_id'] = $request->user()->id;
-        $validated['tipo_atendimento_id'] = $tipo->id;
-
-        $atendimento = TemplateAtendimento::create($validated);
-
-        // 🔒 Validar itens contra o tipo
-        if (is_array($request->items)) {
-
-            $itensPermitidos = $tipo->listItems()
-                ->pluck('list_items.id')
-                ->toArray();
-
-            foreach ($request->items as $item) {
-
-                if (!in_array($item['list_item_id'], $itensPermitidos)) {
-                    abort(403, 'Item não permitido para este tipo de atendimento');
-                }
-
-                AtendimentoItem::create([
-                    'template_atendimento_id' => $atendimento->id,
-                    'list_item_id' => $item['list_item_id'],
-                    'quantity' => $item['quantity'] ?? null,
-                ]);
-            }
-        }
-
-        return $atendimento->load(['cliente', 'items.listItem']);
+        return new AtendimentoResource($atendimento);
     }
 
     public function show(TemplateAtendimento $atendimento)

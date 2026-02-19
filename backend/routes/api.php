@@ -87,8 +87,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/atendimentos', [AtendimentoController::class, 'index']);
 
     // Criar atendimento (depende do tipo)
-    Route::post('/atendimentos', [AtendimentoController::class, 'store'])
-        ->middleware('can:create,App\Models\TipoAtendimento');
+    Route::post('/atendimentos', [AtendimentoController::class, 'store']);
 
     // Visualizar atendimento específico
     Route::get('/atendimentos/{atendimento}', [AtendimentoController::class, 'show'])
@@ -106,6 +105,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // CLIENTES
     // ============================
     Route::apiResource('clientes', ClienteController::class);
+    Route::get('/clientes/{cliente}/historico', [ClienteController::class, 'historico']);
 
     // ============================
     // TIPOS DE ATENDIMENTO

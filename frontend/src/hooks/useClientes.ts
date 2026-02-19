@@ -1,7 +1,7 @@
 // src/hooks/useClientes.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { Cliente, ClienteFormData } from '@/types';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 
 /* =======================
@@ -39,6 +39,23 @@ export const useCliente = (id?: number) => {
             return data.data; // ✅ retorna o cliente puro
         },
         enabled: !!id,
+    });
+};
+
+/* =======================
+ * HISTÓRICO DE ATENDIMENTOS DO CLIENTE
+ * ======================= */
+export const useClienteHistorico = (
+    clienteId?: number,
+    enabled: boolean = false
+) => {
+    return useQuery({
+        queryKey: ['cliente-historico', clienteId],
+        queryFn: async () => {
+            const { data } = await api.get(`/clientes/${clienteId}/historico`);
+            return data.data;
+        },
+        enabled: enabled && !!clienteId,
     });
 };
 

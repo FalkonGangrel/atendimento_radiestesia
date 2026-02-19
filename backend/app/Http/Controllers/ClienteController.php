@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
+use App\Models\Atendimento;
 use App\Http\Resources\ClienteResource;
+use App\Http\Resources\AtendimentoResource;
 use App\Http\Requests\ClienteRequest;
 use Illuminate\Http\Request;
 
@@ -20,7 +22,12 @@ class ClienteController extends Controller
 
         $query = Cliente::query()
             ->ownedBy(auth()->user())
-            ->with('atendente');
+            ->with('atendente')
+            ->with(['atendimentos' => function ($q) {
+                $q->where('user_id', auth()->id())
+                ->latest('data_atendimento')
+                ->limit(1);
+            }]);
 
         // filtro por ativo/inativo
         if ($request->has('active')) {
@@ -106,6 +113,19 @@ class ClienteController extends Controller
         return response()->json([
             'message' => 'Cliente removido permanentemente.'
         ]);
+    }
+
+    public function historico(Cliente $cliente)
+    {
+        $this->authorize('view', $cliente);
+
+        $historico = Atendimento::where('cliente_id', $cliente->id)
+            ->where('user_id', auth()->id())
+            ->with('tipo')
+            ->orderByDesc('data_atendimento')
+            ->get();
+
+        return AtendimentoResource::collection($historico);
     }
 
 }

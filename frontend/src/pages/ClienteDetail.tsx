@@ -1,20 +1,20 @@
-import { useState, useCallback, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { api } from '@/lib/api'
-import { useAuth } from '@/contexts/'
-import { Permissions } from '@/constants/permissions'
-import type { Cliente } from '@/types'
 import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Permissions } from '@/constants/permissions'
+import { useAuth } from '@/contexts/'
+import { api } from '@/lib/api'
+import type { Cliente } from '@/types'
 import {
   ArrowLeft,
-  Edit,
-  Trash2,
   Calendar,
+  Edit,
   Mail,
+  MessageCircle,
   Phone,
-  MessageCircle
+  Trash2,
 } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 
 export default function ClienteDetail() {
   const navigate = useNavigate()
@@ -22,6 +22,8 @@ export default function ClienteDetail() {
   const { id } = useParams<{ id: string }>()
 
   const [cliente, setCliente] = useState<Cliente | null>(null)
+  const [atendimentos, setAtendimentos] = useState<any[]>([])
+  const [loadingAtendimentos, setLoadingAtendimentos] = useState(true)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -43,12 +45,26 @@ export default function ClienteDetail() {
     }
   }, [id])
 
+  const fetchAtendimentos = useCallback(async () => {
+  try {
+    setLoadingAtendimentos(true)
+    const response = await api.get(`/clientes/${id}/historico`)
+    setAtendimentos(response.data.data)
+  } catch (err) {
+    console.error(err)
+  } finally {
+    setLoadingAtendimentos(false)
+  }
+}, [id])
+
+
   /**
    * Effect correto (sem warning)
    */
   useEffect(() => {
     fetchCliente()
-  }, [fetchCliente])
+    fetchAtendimentos()
+  }, [fetchCliente, fetchAtendimentos])
 
   const handleDelete = async () => {
     if (!confirm('Tem certeza que deseja desativar este cliente?')) return
@@ -206,10 +222,47 @@ export default function ClienteDetail() {
             <CardHeader>
               <CardTitle>Histórico de Atendimentos</CardTitle>
             </CardHeader>
+
             <CardContent>
-              <p className="text-gray-500 text-center py-8">
-                Em breve: histórico de atendimentos deste cliente
-              </p>
+              {loadingAtendimentos ? (
+                <p className="text-gray-500 text-center py-6">
+                  Carregando atendimentos...
+                </p>
+              ) : atendimentos.length === 0 ? (
+                <p className="text-gray-500 text-center py-6">
+                  Nenhum atendimento registrado
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {atendimentos.map((item) => (
+                    <div
+                      key={item.id}
+                      className="border rounded-lg p-4 bg-gray-50 hover:bg-gray-100 transition"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div className="font-semibold text-gray-800">
+                          {item.tipo?.nome}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          Atendido em: {formatDateBR(item.data_atendimento)}
+                        </div>
+                      </div>
+
+                      {item.data_retorno && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Retorno: {formatDateBR(item.data_retorno)}
+                        </div>
+                      )}
+
+                      {item.observacao && (
+                        <p className="mt-3 text-sm text-gray-700 whitespace-pre-wrap">
+                          {item.observacao}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
