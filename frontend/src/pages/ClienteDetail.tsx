@@ -23,6 +23,7 @@ export default function ClienteDetail() {
 
   const [cliente, setCliente] = useState<Cliente | null>(null)
   const [atendimentos, setAtendimentos] = useState<any[]>([])
+  const [expandedId, setExpandedId] = useState<number | null>(null)
   const [loadingAtendimentos, setLoadingAtendimentos] = useState(true)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -219,8 +220,15 @@ export default function ClienteDetail() {
           )}
 
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Histórico de Atendimentos</CardTitle>
+
+              <Button
+                size="sm"
+                onClick={() => navigate(`/atendimentos/novo?cliente_id=${id}`)}
+              >
+                Novo Atendimento
+              </Button>
             </CardHeader>
 
             <CardContent>
@@ -237,11 +245,16 @@ export default function ClienteDetail() {
                   {atendimentos.map((item) => (
                     <div
                       key={item.id}
-                      className="border rounded-lg p-4 bg-gray-50 hover:bg-gray-100 transition"
+                      className="border rounded-lg p-4 bg-gray-50 cursor-pointer"
+                      onClick={() =>
+                        setExpandedId(expandedId === item.id ? null : item.id)
+                      }
                     >
                       <div className="flex justify-between items-center">
                         <div className="font-semibold text-gray-800">
-                          {item.tipo?.nome}
+                          <span className="px-2 py-1 text-xs rounded bg-indigo-100 text-indigo-700">
+                            {item.tipo?.nome}
+                          </span>
                         </div>
                         <div className="text-sm text-gray-500">
                           Atendido em: {formatDateBR(item.data_atendimento)}
@@ -254,7 +267,7 @@ export default function ClienteDetail() {
                         </div>
                       )}
 
-                      {item.observacao && (
+                      {expandedId === item.id && item.observacao && (
                         <p className="mt-3 text-sm text-gray-700 whitespace-pre-wrap">
                           {item.observacao}
                         </p>

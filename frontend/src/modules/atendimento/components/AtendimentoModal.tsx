@@ -45,7 +45,7 @@ export default function AtendimentoModal({ clienteId, open, onClose }: Props) {
           </p>
         )}
 
-        <div className="mt-6 border-t pt-4">
+        <div className="mt-6 mb-4 border-t pt-4">
           <AtendimentoForm clienteId={clienteId} />
         </div>
 

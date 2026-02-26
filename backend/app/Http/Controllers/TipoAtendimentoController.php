@@ -23,6 +23,18 @@ class TipoAtendimentoController extends Controller
         return TipoAtendimentoResource::collection($tipos);
     }
 
+    public function indexSimplificado()
+    {
+        $this->authorize('viewAny', TipoAtendimento::class);
+
+        $tipos = TipoAtendimento::where('ativo', true)
+            ->permitidoPara(auth()->user(), 'simplificado')
+            ->orderBy('ordem')
+            ->orderBy('nome')
+            ->get();
+
+        return TipoAtendimentoResource::collection($tipos);
+    }
 
     public function store(StoreTipoAtendimentoRequest $request)
     {

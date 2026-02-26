@@ -69,7 +69,7 @@ class TipoAtendimento extends Model
 
     public function permissions()
     {
-        return $this->hasMany(UserTipoAtendimentoPermission::class);
+        return $this->hasMany(UserTipoAtendimentoPermission::class, 'tipo_atendimento_id');
     }
 
     public function scopeAtivo($query)
@@ -80,6 +80,26 @@ class TipoAtendimento extends Model
     public function scopeOrdenado($query)
     {
         return $query->orderBy('ordem')->orderBy('nome');
+    }
+
+    public function scopePermitidoPara($query, $user, $modo = null)
+    {
+        if ($user->isMaster()) {
+            return $query; // Master vê tudo
+        }
+
+        if ($user->role === 'admin' || $user->role === 'manager') {
+            return $query->whereHas('permissoes', function ($q) use ($modo) {
+                $q->where('allowed', true)
+                ->when($modo, fn ($qq) => $qq->where('modo', $modo));
+            });
+        }
+
+        return $query->whereHas('permissoes', function ($q) use ($user, $modo) {
+            $q->where('user_id', $user->id)
+            ->where('allowed', true)
+            ->when($modo, fn ($qq) => $qq->where('modo', $modo));
+        });
     }
 
 }

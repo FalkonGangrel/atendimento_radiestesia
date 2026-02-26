@@ -112,6 +112,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // ============================
     Route::get('/tipos-atendimento', [TipoAtendimentoController::class, 'index']);
 
+    Route::get('/tipos-atendimento-simplificado', [TipoAtendimentoController::class, 'indexSimplificado']);
+
     Route::get('/tipos-atendimento/{tipo}/estrutura', [TipoAtendimentoController::class, 'estrutura']);
 
     Route::post('/tipos-atendimento', [TipoAtendimentoController::class, 'store'])

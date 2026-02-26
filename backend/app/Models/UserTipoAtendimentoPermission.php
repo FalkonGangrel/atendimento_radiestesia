@@ -10,6 +10,14 @@ class UserTipoAtendimentoPermission extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'user_id',
+        'tipo_atendimento_id',
+        'permission_id',
+        'allowed',
+        'modo',
+    ];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

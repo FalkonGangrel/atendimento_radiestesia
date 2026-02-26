@@ -10,3 +10,13 @@ export const useTiposAtendimento = () => {
     },
   });
 };
+
+export const useTiposAtendimentoSimplificado = () => {
+  return useQuery({
+    queryKey: ['tipos-atendimento-simplificado'],
+    queryFn: async () => {
+      const { data } = await api.get('/tipos-atendimento-simplificado');
+      return data.data;
+    },
+  });
+};

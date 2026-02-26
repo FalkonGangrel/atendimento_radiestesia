@@ -20,6 +20,8 @@ return new class extends Migration
 
             $table->boolean('allowed')->default(true);
 
+            $table->enum('modo', ['simplificado', 'completo'])->default('simplificado');
+
             $table->unique([
                 'user_id',
                 'tipo_atendimento_id',

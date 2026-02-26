@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createAtendimento } from '../services/atendimento.service';
-import { useTiposAtendimento } from '@/modules/tipo-atendimento/hooks/useTiposAtendimento';
+import { useTiposAtendimentoSimplificado } from '@/modules/tipo-atendimento/hooks/useTiposAtendimento';
 
 export default function AtendimentoForm({ clienteId }: { clienteId: number }) {
   const queryClient = useQueryClient();
-  const { data: tipos } = useTiposAtendimento();
+  const { data: tipos } = useTiposAtendimentoSimplificado();
 
   const [form, setForm] = useState({
     tipo_atendimento_id: '',
