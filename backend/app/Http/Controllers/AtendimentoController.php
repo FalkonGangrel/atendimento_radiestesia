@@ -67,4 +67,30 @@ class AtendimentoController extends Controller
 
         return response()->json(['message' => 'Atendimento deletado']);
     }
+
+    public function concluirRetorno(Atendimento $atendimento)
+    {
+        $atendimento->update([
+            'retorno_concluido' => true,
+        ]);
+
+        return response()->noContent();
+    }
+
+    public function concluirEGerar(Atendimento $atendimento)
+    {
+        $atendimento->update([
+            'retorno_concluido' => true,
+        ]);
+
+        Atendimento::create([
+            'cliente_id' => $atendimento->cliente_id,
+            'tipo_atendimento_id' => $atendimento->tipo_atendimento_id,
+            'user_id' => auth()->id(),
+            'data_atendimento' => now(),
+            'observacao' => 'Retorno automático',
+        ]);
+
+        return response()->noContent();
+    }
 }

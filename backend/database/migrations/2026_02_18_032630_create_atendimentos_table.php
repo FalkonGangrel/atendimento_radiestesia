@@ -35,6 +35,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['cliente_id', 'user_id']);
+            $table->boolean('retorno_concluido')->default(false);
         });
 
     }

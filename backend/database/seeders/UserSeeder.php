@@ -27,6 +27,13 @@ class UserSeeder extends Seeder
             'name' => 'Helga Takeno',
             'email' => 'otarotparavida@gmail.com',
             'password' => Hash::make('De422309$'), // Senha específica para Helga
+            'role' => 'master',
+        ]);
+
+        User::create([
+            'name' => 'Atendente 2',
+            'email' => 'atendente2@radiestesia.com',
+            'password' => $defaultPassword,
             'role' => 'atendente',
         ]);
     }

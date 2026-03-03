@@ -13,6 +13,7 @@ class Atendimento extends Model
         'data_atendimento',
         'data_retorno',
         'observacao',
+        'retorno_concluido',
     ];
 
     protected $casts = [
