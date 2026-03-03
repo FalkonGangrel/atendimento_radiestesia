@@ -102,7 +102,7 @@ class PermissionService
      |  UTIL
      ===================================================== */
 
-    protected function isSuperUser(User $user): bool
+    public function isSuperUser(User $user): bool
     {
         return in_array($user->role, ['master', 'admin'], true);
     }

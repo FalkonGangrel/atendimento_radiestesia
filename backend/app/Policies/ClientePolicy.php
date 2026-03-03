@@ -4,56 +4,37 @@ namespace App\Policies;
 
 use App\Models\User;
 use App\Models\Cliente;
+use App\Models\TipoAtendimento;
 
-class ClientePolicy extends BasePermissionPolicy
+class ClientePolicy extends BasePolicy
 {
-    public function viewAny(User $user): bool
+    public function viewAny(User $user, TipoAtendimento $tipo): bool
     {
-        // Se master, pode ver todos
-        if ($user->isMaster()) {
-            return true;
-        }
-
-        return $user->hasPermission('clientes.view');
+        return $this->can($user, 'clientes.view', $tipo);
     }
 
     public function view(User $user, Cliente $cliente): bool
     {
-        if ($user->isMaster()) {
-            return true;
-        }
-
-        return $user->hasPermission('clientes.view')
-            && $cliente->user_id === $user->id;
+        return $this->can($user, 'clientes.view', $cliente->tipoAtendimento);
     }
 
-    public function create(User $user): bool
+    public function create(User $user, TipoAtendimento $tipo): bool
     {
-        return $user->hasPermission('clientes.create');
+        return $this->can($user, 'clientes.create', $tipo);
     }
 
     public function update(User $user, Cliente $cliente): bool
     {
-        if ($user->isMaster()) {
-            return true;
-        }
-
-        return $user->hasPermission('clientes.update')
-            && $cliente->user_id === $user->id;
+        return $this->can($user, 'clientes.update', $cliente->tipoAtendimento);
     }
 
     public function delete(User $user, Cliente $cliente): bool
     {
-        if ($user->isMaster()) {
-            return true;
-        }
-
-        return $user->hasPermission('clientes.delete')
-            && $cliente->user_id === $user->id;
+        return $this->can($user, 'clientes.delete', $cliente->tipoAtendimento);
     }
 
     public function restore(User $user, Cliente $cliente): bool
     {
-        return $user->isMaster();
+        return $this->can($user, 'clientes.restore', $cliente->tipoAtendimento);
     }
 }

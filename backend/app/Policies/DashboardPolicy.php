@@ -3,11 +3,12 @@
 namespace App\Policies;
 
 use App\Models\User;
+use App\Models\TipoAtendimento;
 
 class DashboardPolicy extends BasePolicy
 {
-    public function view(User $user): bool
+    public function view(User $user, TipoAtendimento $tipo): bool
     {
-        return false;
+        return $this->can($user, 'dashboard.view', $tipo);
     }
 }

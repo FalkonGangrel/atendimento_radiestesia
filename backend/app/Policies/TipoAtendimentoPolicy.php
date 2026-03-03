@@ -5,49 +5,46 @@ namespace App\Policies;
 use App\Models\User;
 use App\Models\TipoAtendimento;
 
-class TipoAtendimentoPolicy extends BasePermissionPolicy
+class TipoAtendimentoPolicy extends BasePolicy
 {
+    /**
+     * Listagem geral: só superusuários veem todos os tipos.
+     * Usuários comuns acessam apenas os tipos aos quais têm permissão (via view).
+     */
     public function viewAny(User $user): bool
     {
-        return $user->isMaster() || $user->isAdmin();
+        // before() já libera master/admin; para outros, sempre false aqui.
+        return false;
     }
 
+    /**
+     * Ver um tipo específico: basta ter qualquer permissão nele.
+     */
     public function view(User $user, TipoAtendimento $tipo): bool
     {
-        return $user->tiposAtendimentoPermitidos()
-            ->where('tipos_atendimento.id', $tipo->id)
-            ->exists();
+        return $this->permissionService->resolve($user, $tipo)->containsStrict(true);
     }
 
+    /**
+     * Gerenciamento de permissões de um tipo: só superusuários.
+     */
     public function viewPermissions(User $user, TipoAtendimento $tipo): bool
     {
-        return $user->isMaster() || $user->isAdmin();
+        return false; // before() libera master/admin
     }
 
-    public function attachToAtendimento(User $user, TipoAtendimento $tipo): bool
+    public function create(User $user): bool
     {
-        return $this->view($user, $tipo);
+        return false; // antes: só superusuários
     }
 
-    public function delete(User $user, TipoAtendimento $tipo)
+    public function update(User $user, TipoAtendimento $tipo): bool
     {
-        return $user->isMaster() || $user->isAdmin();
+        return false; // antes: só superusuários
     }
 
-    public function use(User $user, TipoAtendimento $tipo): bool
+    public function delete(User $user, TipoAtendimento $tipo): bool
     {
-        if ($user->isMaster()) return true;
-
-        return $tipo->permissions()
-            ->where('user_id', $user->id)
-            ->whereHas('permission', fn($q) => $q->where('slug', 'use'))
-            ->where('allowed', true)
-            ->exists();
+        return false; // antes: só superusuários
     }
-
-    public function create(User $user, TipoAtendimento $tipo): bool
-    {
-        return $this->can($user, $tipo, 'atendimentos.create');
-    }
-
 }

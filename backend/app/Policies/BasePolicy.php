@@ -3,32 +3,38 @@
 namespace App\Policies;
 
 use App\Models\User;
+use App\Models\TipoAtendimento;
+use App\Services\PermissionService;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 abstract class BasePolicy
 {
     use HandlesAuthorization;
 
+    public function __construct(protected PermissionService $permissionService) {}
+
     /**
-     * Executado antes de qualquer método da policy.
+     * Superusuários (master/admin) têm acesso irrestrito.
+     * O before() do Laravel chama isso antes de qualquer método da policy.
      */
     public function before(User $user, string $ability): bool|null
     {
-        // Master pode tudo
-        if ($this->isAdmin($user)) {
-            return true;
-        }
-
-        return null;
+        return $this->permissionService->isSuperUser($user) ? true : null;
     }
 
-    protected function isAdmin(User $user): bool
+    /**
+     * Verifica permissão por tipo (caso padrão).
+     */
+    protected function can(User $user, string $key, TipoAtendimento $tipo): bool
     {
-        return in_array($user->role, ['master', 'admin'], true);
+        return $this->permissionService->can($user, $key, $tipo);
     }
 
-    protected function isOwner(User $user, $model): bool
+    /**
+     * Verifica permissão global (sem tipo — ex: usuários, dashboard global).
+     */
+    protected function canGlobal(User $user, string $key): bool
     {
-        return isset($model->user_id) && $model->user_id === $user->id;
+        return $this->permissionService->can($user, $key);
     }
 }
