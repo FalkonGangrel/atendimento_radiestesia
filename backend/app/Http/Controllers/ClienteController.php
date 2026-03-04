@@ -18,34 +18,28 @@ class ClienteController extends Controller
 
     public function index(Request $request)
     {
-        $this->authorize('viewAny', Cliente::class);
+        // authorizeResource() já chama viewAny — não chamar authorize() de novo aqui
 
         $query = Cliente::query()
             ->ownedBy(auth()->user())
             ->with('atendente')
             ->with(['atendimentos' => function ($q) {
                 $q->where('user_id', auth()->id())
-                ->latest('data_atendimento')
-                ->limit(1);
+                    ->latest('data_atendimento')
+                    ->limit(1);
             }]);
 
-        // filtro por ativo/inativo
         if ($request->has('active')) {
-            if ($request->boolean('active')) {
-                $query->whereNull('deleted_at');
-            } else {
-                $query->onlyTrashed();
-            }
+            $request->boolean('active')
+                ? $query->whereNull('deleted_at')
+                : $query->onlyTrashed();
         }
 
-        // busca por nome
         if ($search = $request->get('search')) {
             $query->where('name', 'like', "%{$search}%");
         }
 
-        $clientes = $query->latest()->paginate(20);
-
-        return ClienteResource::collection($clientes);
+        return ClienteResource::collection($query->latest()->paginate(20));
     }
 
     public function show(Cliente $cliente)
@@ -57,11 +51,10 @@ class ClienteController extends Controller
 
     public function store(ClienteRequest $request)
     {
-
         $cliente = Cliente::create([
             ...$request->validated(),
             'user_id' => auth()->id(),
-            'ativo' => true,
+            'ativo'   => true,
         ]);
 
         return new ClienteResource($cliente->load('atendente:id,name,email'));
@@ -69,8 +62,6 @@ class ClienteController extends Controller
 
     public function update(ClienteRequest $request, Cliente $cliente)
     {
-        $this->authorize('update', $cliente);
-
         $cliente->update($request->validated());
 
         return new ClienteResource($cliente->load('atendente'));
@@ -78,13 +69,9 @@ class ClienteController extends Controller
 
     public function destroy(Cliente $cliente)
     {
-        $this->authorize('delete', $cliente);
-
         $cliente->delete();
 
-        return response()->json([
-            'message' => 'Cliente desativado com sucesso.'
-        ]);
+        return response()->json(['message' => 'Cliente desativado com sucesso.']);
     }
 
     public function restore($id)
@@ -110,9 +97,7 @@ class ClienteController extends Controller
 
         $cliente->forceDelete();
 
-        return response()->json([
-            'message' => 'Cliente removido permanentemente.'
-        ]);
+        return response()->json(['message' => 'Cliente removido permanentemente.']);
     }
 
     public function historico(Cliente $cliente)
@@ -127,5 +112,4 @@ class ClienteController extends Controller
 
         return AtendimentoResource::collection($historico);
     }
-
 }

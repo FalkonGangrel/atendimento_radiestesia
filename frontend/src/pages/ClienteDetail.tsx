@@ -1,8 +1,8 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Permissions } from '@/constants/permissions'
 import { useAuth } from '@/contexts/'
 import { api } from '@/lib/api'
+import AtendimentoModal from '@/modules/atendimento/components/AtendimentoModal'
 import type { Cliente } from '@/types'
 import {
   ArrowLeft,
@@ -18,7 +18,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 export default function ClienteDetail() {
   const navigate = useNavigate()
-  const { hasPermission } = useAuth()
+  const { user } = useAuth()
   const { id } = useParams<{ id: string }>()
 
   const [cliente, setCliente] = useState<Cliente | null>(null)
@@ -27,19 +27,15 @@ export default function ClienteDetail() {
   const [loadingAtendimentos, setLoadingAtendimentos] = useState(true)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [atendimentoModalOpen, setAtendimentoModalOpen] = useState(false)
 
-  /**
-   * Busca o cliente
-   * useCallback evita warning do useEffect
-   */
   const fetchCliente = useCallback(async () => {
     try {
       setLoading(true)
       const response = await api.get(`/clientes/${id}`)
       setCliente(response.data.data)
       setError(null)
-    } catch (err) {
-      console.error(err)
+    } catch {
       setError('Erro ao carregar cliente')
     } finally {
       setLoading(false)
@@ -47,21 +43,17 @@ export default function ClienteDetail() {
   }, [id])
 
   const fetchAtendimentos = useCallback(async () => {
-  try {
-    setLoadingAtendimentos(true)
-    const response = await api.get(`/clientes/${id}/historico`)
-    setAtendimentos(response.data.data)
-  } catch (err) {
-    console.error(err)
-  } finally {
-    setLoadingAtendimentos(false)
-  }
-}, [id])
+    try {
+      setLoadingAtendimentos(true)
+      const response = await api.get(`/clientes/${id}/historico`)
+      setAtendimentos(response.data.data)
+    } catch {
+      // silencioso — histórico vazio é estado válido
+    } finally {
+      setLoadingAtendimentos(false)
+    }
+  }, [id])
 
-
-  /**
-   * Effect correto (sem warning)
-   */
   useEffect(() => {
     fetchCliente()
     fetchAtendimentos()
@@ -69,22 +61,25 @@ export default function ClienteDetail() {
 
   const handleDelete = async () => {
     if (!confirm('Tem certeza que deseja desativar este cliente?')) return
-
     try {
       await api.delete(`/clientes/${id}`)
       navigate('/clientes')
-    } catch (err) {
-      console.error(err)
+    } catch {
       setError('Erro ao desativar cliente')
     }
   }
 
-  function formatDateBR(date: string) {
-      if (!date) return '';
-      const [year, month, day] = date.split('-');
-      return `${day}/${month}/${year}`;
-  }
+  // Ownership: atendente pode gerenciar apenas seus próprios clientes
+  const canManage =
+    user?.role === 'master' ||
+    user?.role === 'admin' ||
+    (cliente ? user?.id === cliente.created_by.id : false)
 
+  function formatDateBR(date: string) {
+    if (!date) return ''
+    const [year, month, day] = date.split('-')
+    return `${day}/${month}/${year}`
+  }
 
   if (loading) {
     return (
@@ -102,63 +97,57 @@ export default function ClienteDetail() {
     )
   }
 
+  const isActive = !cliente.deleted_at
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/clientes')}
-            className="mb-4"
-          >
+          <Button variant="ghost" onClick={() => navigate('/clientes')} className="mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
 
           <div className="flex justify-between items-start">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                {cliente.name}
-              </h1>
+              <h1 className="text-3xl font-bold text-gray-900">{cliente.name}</h1>
               <p className="text-gray-600 mt-2">Detalhes do cliente</p>
             </div>
 
-            <div className="flex gap-2">
-              {hasPermission(Permissions.CLIENTES_UPDATE) && (
-                <Button
-                  variant="outline"
-                  onClick={() => navigate(`/clientes/${id}/editar`)}
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Editar
-                </Button>
-              )}
+            {canManage && (
+              <div className="flex gap-2">
+                {isActive && (
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate(`/clientes/${id}/editar`)}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Editar
+                  </Button>
+                )}
 
-              {hasPermission(Permissions.CLIENTES_DELETE) && (
-                <Button variant="destructive" onClick={handleDelete}>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Desativar
-                </Button>
-              )}
-            </div>
+                {isActive && (
+                  <Button variant="destructive" onClick={handleDelete}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Desativar
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Error */}
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
             {error}
           </div>
         )}
 
-        {/* Informações */}
         <div className="grid gap-6">
           <Card>
             <CardHeader>
               <CardTitle>Informações Pessoais</CardTitle>
             </CardHeader>
-
             <CardContent className="space-y-4">
               {cliente.email && (
                 <div className="flex items-center gap-3">
@@ -169,7 +158,6 @@ export default function ClienteDetail() {
                   </div>
                 </div>
               )}
-
               {cliente.phone && (
                 <div className="flex items-center gap-3">
                   <Phone className="w-5 h-5 text-gray-400" />
@@ -179,7 +167,6 @@ export default function ClienteDetail() {
                   </div>
                 </div>
               )}
-
               {cliente.whatsapp && (
                 <div className="flex items-center gap-3">
                   <MessageCircle className="w-5 h-5 text-gray-400" />
@@ -189,17 +176,12 @@ export default function ClienteDetail() {
                   </div>
                 </div>
               )}
-
               {cliente.birth_date && (
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-gray-400" />
                   <div>
-                    <p className="text-sm text-gray-600">
-                      Data de Nascimento
-                    </p>
-                    <p className="font-medium">
-                      {formatDateBR(cliente.birth_date)}
-                    </p>
+                    <p className="text-sm text-gray-600">Data de Nascimento</p>
+                    <p className="font-medium">{formatDateBR(cliente.birth_date)}</p>
                   </div>
                 </div>
               )}
@@ -212,9 +194,7 @@ export default function ClienteDetail() {
                 <CardTitle>Observações</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-700 whitespace-pre-wrap">
-                  {cliente.observation}
-                </p>
+                <p className="text-gray-700 whitespace-pre-wrap">{cliente.observation}</p>
               </CardContent>
             </Card>
           )}
@@ -222,27 +202,21 @@ export default function ClienteDetail() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Histórico de Atendimentos</CardTitle>
-
-              <Button
-                size="sm"
-                onClick={() => navigate(`/atendimentos/novo?cliente_id=${id}`)}
-              >
-                Novo Atendimento
-              </Button>
+              {canManage && (
+                <Button size="sm" onClick={() => setAtendimentoModalOpen(true)}>
+                  Novo Atendimento
+                </Button>
+              )}
             </CardHeader>
 
             <CardContent>
               {loadingAtendimentos ? (
-                <p className="text-gray-500 text-center py-6">
-                  Carregando atendimentos...
-                </p>
+                <p className="text-gray-500 text-center py-6">Carregando atendimentos...</p>
               ) : atendimentos.length === 0 ? (
-                <p className="text-gray-500 text-center py-6">
-                  Nenhum atendimento registrado
-                </p>
+                <p className="text-gray-500 text-center py-6">Nenhum atendimento registrado</p>
               ) : (
                 <div className="space-y-4">
-                  {atendimentos.map((item) => (
+                  {atendimentos.map(item => (
                     <div
                       key={item.id}
                       className="border rounded-lg p-4 bg-gray-50 cursor-pointer"
@@ -251,22 +225,18 @@ export default function ClienteDetail() {
                       }
                     >
                       <div className="flex justify-between items-center">
-                        <div className="font-semibold text-gray-800">
-                          <span className="px-2 py-1 text-xs rounded bg-indigo-100 text-indigo-700">
-                            {item.tipo?.nome}
-                          </span>
-                        </div>
+                        <span className="px-2 py-1 text-xs rounded bg-indigo-100 text-indigo-700">
+                          {item.tipo?.nome}
+                        </span>
                         <div className="text-sm text-gray-500">
                           Atendido em: {formatDateBR(item.data_atendimento)}
                         </div>
                       </div>
-
                       {item.data_retorno && (
                         <div className="text-xs text-gray-500 mt-1">
                           Retorno: {formatDateBR(item.data_retorno)}
                         </div>
                       )}
-
                       {expandedId === item.id && item.observacao && (
                         <p className="mt-3 text-sm text-gray-700 whitespace-pre-wrap">
                           {item.observacao}
@@ -280,6 +250,18 @@ export default function ClienteDetail() {
           </Card>
         </div>
       </div>
+
+      {/* Modal de novo atendimento */}
+      {atendimentoModalOpen && (
+        <AtendimentoModal
+          clienteId={Number(id)}
+          open={atendimentoModalOpen}
+          onClose={() => {
+            setAtendimentoModalOpen(false)
+            fetchAtendimentos() // recarrega o histórico após fechar
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -12,7 +12,7 @@ export interface Cliente {
     data_retorno?: string | null;
     observacao_resumo?: string | null;
 
-    created_by?: {
+    created_by: {
         id: number;
         name: string;
         email: string;

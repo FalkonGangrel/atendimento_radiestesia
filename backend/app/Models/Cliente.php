@@ -40,7 +40,7 @@ class Cliente extends Model
 
     public function scopeOwnedBy($query, $user)
     {
-        if ($user->is_master) {
+        if ($user->isAdmin()) {
             return $query;
         }
 

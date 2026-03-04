@@ -19,7 +19,7 @@ abstract class BasePolicy
      */
     public function before(User $user, string $ability): bool|null
     {
-        return $this->permissionService->isSuperUser($user) ? true : null;
+        return in_array($user->role, ['master', 'admin'], true) ? true : null;
     }
 
     /**
@@ -31,7 +31,7 @@ abstract class BasePolicy
     }
 
     /**
-     * Verifica permissão global (sem tipo — ex: usuários, dashboard global).
+     * Verifica permissão global (sem tipo — ex: usuários).
      */
     protected function canGlobal(User $user, string $key): bool
     {
