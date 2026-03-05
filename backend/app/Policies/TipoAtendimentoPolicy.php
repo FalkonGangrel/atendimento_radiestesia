@@ -26,6 +26,15 @@ class TipoAtendimentoPolicy extends BasePolicy
     }
 
     /**
+     * Usar um tipo para registrar atendimento:
+     * verifica se o usuário tem pelo menos uma permissão ativa no tipo.
+     */
+    public function use(User $user, TipoAtendimento $tipo): bool
+    {
+        return $this->permissionService->resolve($user, $tipo)->containsStrict(true);
+    }
+
+    /**
      * Gerenciamento de permissões de um tipo: só superusuários.
      */
     public function viewPermissions(User $user, TipoAtendimento $tipo): bool

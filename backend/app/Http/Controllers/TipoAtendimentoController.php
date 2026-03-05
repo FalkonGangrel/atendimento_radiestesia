@@ -11,6 +11,9 @@ use Illuminate\Http\Request;
 
 class TipoAtendimentoController extends Controller
 {
+    /**
+     * Listagem completa — apenas superusuários (master/admin).
+     */
     public function index()
     {
         $this->authorize('viewAny', TipoAtendimento::class);
@@ -23,12 +26,15 @@ class TipoAtendimentoController extends Controller
         return TipoAtendimentoResource::collection($tipos);
     }
 
+    /**
+     * Listagem simplificada — qualquer autenticado.
+     * O scope permitidoPara filtra automaticamente os tipos acessíveis ao usuário.
+     * Master/admin veem todos; atendentes veem apenas os que têm permissão.
+     */
     public function indexSimplificado()
     {
-        $this->authorize('viewAny', TipoAtendimento::class);
-
         $tipos = TipoAtendimento::where('ativo', true)
-            ->permitidoPara(auth()->user(), 'simplificado')
+            ->permitidoPara(auth()->user())
             ->orderBy('ordem')
             ->orderBy('nome')
             ->get();
@@ -43,7 +49,6 @@ class TipoAtendimentoController extends Controller
         return new TipoAtendimentoResource($tipo);
     }
 
-
     public function show(TipoAtendimento $tipoAtendimento)
     {
         $this->authorize('view', $tipoAtendimento);
@@ -57,13 +62,13 @@ class TipoAtendimentoController extends Controller
 
         $tipoAtendimento->update(
             $request->validate([
-                'nome' => 'sometimes|required|string|max:255',
-                'slug' => 'sometimes|required|string|max:255|unique:tipos_atendimento,slug,' . $tipoAtendimento->id,
-                'descricao' => 'nullable|string',
-                'valor' => 'sometimes|required|numeric|min:0',
-                'duracao_minutos' => 'nullable|integer|min:0',
-                'ativo' => 'boolean',
-                'ordem' => 'integer|min:0',
+                'nome'             => 'sometimes|required|string|max:255',
+                'slug'             => 'sometimes|required|string|max:255|unique:tipos_atendimento,slug,' . $tipoAtendimento->id,
+                'descricao'        => 'nullable|string',
+                'valor'            => 'sometimes|required|numeric|min:0',
+                'duracao_minutos'  => 'nullable|integer|min:0',
+                'ativo'            => 'boolean',
+                'ordem'            => 'integer|min:0',
             ])
         );
 
@@ -79,15 +84,12 @@ class TipoAtendimentoController extends Controller
         return response()->json(['message' => 'Tipo de atendimento deletado com sucesso']);
     }
 
-    public function estrutura(
-        TipoAtendimento $tipo,
-        TipoAtendimentoService $service
-    ) {
+    public function estrutura(TipoAtendimento $tipo, TipoAtendimentoService $service)
+    {
         $this->authorize('use', $tipo);
 
         $tipo = $service->carregarEstrutura($tipo);
 
         return new TipoAtendimentoEstruturaResource($tipo);
     }
-
 }

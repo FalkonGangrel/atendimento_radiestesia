@@ -88,17 +88,19 @@ class TipoAtendimento extends Model
             return $query; // Master vê tudo
         }
 
-        if ($user->role === 'admin' || $user->role === 'manager') {
-            return $query->whereHas('permissoes', function ($q) use ($modo) {
+        // admin/manager veem todos os tipos que têm pelo menos uma permissão ativa
+        if ($user->isAdmin()) {
+            return $query->whereHas('permissions', function ($q) use ($modo) {
                 $q->where('allowed', true)
-                ->when($modo, fn ($qq) => $qq->where('modo', $modo));
+                  ->when($modo, fn ($qq) => $qq->where('modo', $modo));
             });
         }
 
-        return $query->whereHas('permissoes', function ($q) use ($user, $modo) {
+        // atendentes veem apenas os tipos onde têm permissão ativa
+        return $query->whereHas('permissions', function ($q) use ($user, $modo) {
             $q->where('user_id', $user->id)
-            ->where('allowed', true)
-            ->when($modo, fn ($qq) => $qq->where('modo', $modo));
+              ->where('allowed', true)
+              ->when($modo, fn ($qq) => $qq->where('modo', $modo));
         });
     }
 

@@ -69,11 +69,12 @@ export default function ClienteDetail() {
     }
   }
 
-  // Ownership: atendente pode gerenciar apenas seus próprios clientes
-  const canManage =
-    user?.role === 'master' ||
-    user?.role === 'admin' ||
-    (cliente ? user?.id === cliente.created_by.id : false)
+  // master/admin podem ver e editar qualquer cliente,
+  // mas só o dono (created_by.id === user.id) pode adicionar atendimentos.
+  const isSuperUser = user?.role === 'master' || user?.role === 'admin'
+  const isOwner = cliente ? user?.id === cliente.created_by.id : false
+  const canManage = isSuperUser || isOwner
+  const canAddAtendimento = isOwner // só o dono registra atendimentos
 
   function formatDateBR(date: string) {
     if (!date) return ''
@@ -201,13 +202,13 @@ export default function ClienteDetail() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Histórico de Atendimentos</CardTitle>
-              {canManage && (
-                <Button size="sm" onClick={() => setAtendimentoModalOpen(true)}>
-                  Novo Atendimento
-                </Button>
-              )}
-            </CardHeader>
+                <CardTitle>Histórico de Atendimentos</CardTitle>
+                {canManage && canAddAtendimento && (
+                  <Button size="sm" onClick={() => setAtendimentoModalOpen(true)}>
+                    Novo Atendimento
+                  </Button>
+                )}
+              </CardHeader>
 
             <CardContent>
               {loadingAtendimentos ? (

@@ -17,10 +17,16 @@ export default function Clientes() {
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [clienteHistoricoId, setClienteHistoricoId] = useState<number | null>(null)
 
-  // Atendente é dono do cliente: pode ver/editar/desativar os seus próprios.
-  // Master/admin pode fazer tudo em qualquer cliente.
-  const isOwner = (clienteUserId: number) =>
-    user?.role === 'master' || user?.role === 'admin' || user?.id === clienteUserId
+  const isSuperUser = user?.role === 'master' || user?.role === 'admin'
+
+  // master/admin: pode ver detalhes e editar qualquer cliente
+  // created_by.id é o user_id do dono
+  const canManage = (clienteUserId: number) =>
+    isSuperUser || user?.id === clienteUserId
+
+  // só o dono pode incluir atendimentos
+  const canAddAtendimento = (clienteUserId: number) =>
+    user?.id === clienteUserId
 
   const handleDelete = async (id: number) => {
     if (!confirm('Tem certeza que deseja desativar este cliente?')) return
@@ -74,7 +80,10 @@ export default function Clientes() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {clientes.map(cliente => {
               const isActive = !cliente.deleted_at
-              const canManage = isOwner(cliente.created_by.id)
+              const owned = canManage(cliente.created_by.id)
+              const canEdit = owned && isActive
+              const canDelete = owned && isActive
+              const canAtendimento = canAddAtendimento(cliente.created_by.id)
 
               return (
                 <Card
@@ -90,8 +99,8 @@ export default function Clientes() {
                     </CardTitle>
 
                     <div className="flex gap-2">
-                      {/* Ver detalhes: qualquer dono */}
-                      {canManage && (
+                      {/* Ver detalhes: master/admin ou dono */}
+                      {owned && (
                         <Button
                           size="sm"
                           variant="outline"
@@ -101,8 +110,8 @@ export default function Clientes() {
                         </Button>
                       )}
 
-                      {/* Editar: dono e ativo */}
-                      {canManage && isActive && (
+                      {/* Editar: dono ou master/admin, apenas ativo */}
+                      {canEdit && (
                         <Button
                           size="sm"
                           variant="outline"
@@ -112,8 +121,8 @@ export default function Clientes() {
                         </Button>
                       )}
 
-                      {/* Desativar: dono e ativo */}
-                      {canManage && isActive && (
+                      {/* Desativar: dono ou master/admin, apenas ativo */}
+                      {canDelete && (
                         <Button
                           size="sm"
                           variant="destructive"
@@ -123,8 +132,8 @@ export default function Clientes() {
                         </Button>
                       )}
 
-                      {/* Atendimento: dono */}
-                      {canManage && (
+                      {/* Atendimento: apenas o dono */}
+                      {canAtendimento && (
                         <Button
                           size="sm"
                           variant="secondary"
