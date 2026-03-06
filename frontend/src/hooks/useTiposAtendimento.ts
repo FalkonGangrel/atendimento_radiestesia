@@ -18,7 +18,7 @@ export const useTiposAtendimentoList = () => {
     queryKey: ['tiposAtendimento'],
     queryFn: async () => {
       const { data } = await api.get<ApiCollection<TipoAtendimento>>('/tipos-atendimento')
-      return data.data // ✅ desembrulha { data: [...] }
+      return data.data
     },
   })
 }
@@ -58,13 +58,13 @@ export const useTipoAtendimentoForm = (id: number | undefined) => {
       const tipo = data.data
 
       return {
-        nome:             tipo.nome,
-        slug:             tipo.slug,
-        descricao:        tipo.descricao ?? '',
-        valor:            tipo.valor?.toString() ?? '0',
-        duracao_minutos:  tipo.duracao_minutos?.toString() ?? '',
-        ordem:            tipo.ordem?.toString() ?? '0',
-        ativo:            tipo.ativo ?? true,
+        nome:            tipo.nome,
+        slug:            tipo.slug,
+        descricao:       tipo.descricao ?? '',
+        valor:           tipo.valor?.toString() ?? '0',
+        duracao_minutos: tipo.duracao_minutos?.toString() ?? '',
+        ordem:           tipo.ordem?.toString() ?? '0',
+        ativo:           tipo.ativo ?? true,
       }
     },
     enabled: !!id,
@@ -93,13 +93,28 @@ export const useSaveTipoAtendimento = () => {
   })
 }
 
-// 🔹 DELETE
+// 🔹 DELETE (soft-delete)
 export const useDeleteTipoAtendimento = () => {
   const queryClient = useQueryClient()
 
   return useMutation<void, AxiosError, number>({
     mutationFn: async (id) => {
       await api.delete(`/tipos-atendimento/${id}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tiposAtendimento'] })
+    },
+  })
+}
+
+// 🔹 RESTORE
+export const useRestoreTipoAtendimento = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation<TipoAtendimento, AxiosError, number>({
+    mutationFn: async (id) => {
+      const res = await api.post<ApiItem<TipoAtendimento>>(`/tipos-atendimento/${id}/restore`)
+      return res.data.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tiposAtendimento'] })

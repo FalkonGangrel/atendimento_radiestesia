@@ -116,17 +116,19 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/tipos-atendimento/{tipo}/estrutura', [TipoAtendimentoController::class, 'estrutura']);
 
-    Route::post('/tipos-atendimento', [TipoAtendimentoController::class, 'store'])
-        ->middleware('permission:tipos-atendimento.manage');
+    Route::middleware('permission:tipos-atendimento.manage')->group(function () {
+        Route::post('/tipos-atendimento', [TipoAtendimentoController::class, 'store']);
 
-    Route::get('/tipos-atendimento/{tipoAtendimento}', [TipoAtendimentoController::class, 'show'])
-        ->middleware('permission:tipos-atendimento.manage');
+        Route::get('/tipos-atendimento/{tipoAtendimento}', [TipoAtendimentoController::class, 'show']);
 
-    Route::put('/tipos-atendimento/{tipoAtendimento}', [TipoAtendimentoController::class, 'update'])
-        ->middleware('permission:tipos-atendimento.manage');
+        Route::put('/tipos-atendimento/{tipoAtendimento}', [TipoAtendimentoController::class, 'update']);
 
-    Route::delete('/tipos-atendimento/{tipoAtendimento}', [TipoAtendimentoController::class, 'destroy'])
-        ->middleware('permission:tipos-atendimento.manage');
+        Route::delete('/tipos-atendimento/{tipoAtendimento}', [TipoAtendimentoController::class, 'destroy']);
+
+        // Restore precisa de withTrashed para o binding encontrar soft-deleted
+        Route::post('/tipos-atendimento/{id}/restore', [TipoAtendimentoController::class, 'restore'])
+            ->withTrashed();
+    });
 
     // ============================
     // USUÁRIOS

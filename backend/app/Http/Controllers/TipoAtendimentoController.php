@@ -12,13 +12,13 @@ use Illuminate\Http\Request;
 class TipoAtendimentoController extends Controller
 {
     /**
-     * Listagem completa — apenas superusuários (master/admin).
+     * Listagem completa para master — ativos e inativos (soft deleted inclusive).
      */
     public function index()
     {
         $this->authorize('viewAny', TipoAtendimento::class);
 
-        $tipos = TipoAtendimento::where('ativo', true)
+        $tipos = TipoAtendimento::withTrashed()
             ->orderBy('ordem')
             ->orderBy('nome')
             ->get();
@@ -27,9 +27,7 @@ class TipoAtendimentoController extends Controller
     }
 
     /**
-     * Listagem simplificada — qualquer autenticado.
-     * O scope permitidoPara filtra automaticamente os tipos acessíveis ao usuário.
-     * Master/admin veem todos; atendentes veem apenas os que têm permissão.
+     * Listagem simplificada — apenas ativos, filtrada por permissão do usuário.
      */
     public function indexSimplificado()
     {
@@ -75,13 +73,31 @@ class TipoAtendimentoController extends Controller
         return new TipoAtendimentoResource($tipoAtendimento->fresh());
     }
 
+    /**
+     * Soft delete — desativa o tipo sem remover do banco.
+     */
     public function destroy(TipoAtendimento $tipoAtendimento)
     {
         $this->authorize('delete', $tipoAtendimento);
 
         $tipoAtendimento->delete();
 
-        return response()->json(['message' => 'Tipo de atendimento removido com sucesso.']);
+        return response()->json(['message' => 'Tipo de atendimento desativado com sucesso.']);
+    }
+
+    /**
+     * Restaura um tipo soft-deleted.
+     */
+    public function restore(int $id)
+    {
+        $tipo = TipoAtendimento::withTrashed()->findOrFail($id);
+
+        $this->authorize('delete', $tipo); // reutiliza a mesma gate de gerenciamento
+
+        $tipo->restore();
+        $tipo->update(['ativo' => true]);
+
+        return new TipoAtendimentoResource($tipo->fresh());
     }
 
     public function estrutura(TipoAtendimento $tipo, TipoAtendimentoService $service)
