@@ -119,13 +119,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tipos-atendimento', [TipoAtendimentoController::class, 'store'])
         ->middleware('permission:tipos-atendimento.manage');
 
-    Route::get('/tipos-atendimento/{id}', [TipoAtendimentoController::class, 'show'])
+    Route::get('/tipos-atendimento/{tipoAtendimento}', [TipoAtendimentoController::class, 'show'])
         ->middleware('permission:tipos-atendimento.manage');
 
-    Route::put('/tipos-atendimento/{id}', [TipoAtendimentoController::class, 'update'])
+    Route::put('/tipos-atendimento/{tipoAtendimento}', [TipoAtendimentoController::class, 'update'])
         ->middleware('permission:tipos-atendimento.manage');
 
-    Route::delete('/tipos-atendimento/{id}', [TipoAtendimentoController::class, 'destroy'])
+    Route::delete('/tipos-atendimento/{tipoAtendimento}', [TipoAtendimentoController::class, 'destroy'])
         ->middleware('permission:tipos-atendimento.manage');
 
     // ============================

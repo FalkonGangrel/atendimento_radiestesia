@@ -20,6 +20,7 @@ import ClienteDetail from '@/pages/ClienteDetail'
 import ClienteForm from '@/pages/ClienteForm'
 import Usuarios from '@/pages/Usuarios'
 import TiposAtendimento from '@/pages/TiposAtendimento'
+import TipoAtendimentoForm from '@/pages/TipoAtendimentoForm'
 
 export default function App() {
   return (
@@ -28,11 +29,11 @@ export default function App() {
         <BrowserRouter>
           <Routes>
 
-            {/* 🌐 Públicas */}
+            {/* Públicas */}
             <Route path="/login" element={<Login />} />
             <Route path="/403" element={<Forbidden />} />
 
-            {/* 🔐 Autenticadas */}
+            {/* Autenticadas */}
             <Route element={<RequireAuth />}>
               <Route element={<LayoutRoute />}>
 
@@ -45,28 +46,27 @@ export default function App() {
                 <Route path="/clientes/:id" element={<ClienteDetail />} />
                 <Route path="/clientes/:id/editar" element={<ClienteForm />} />
 
-                {/* 👑 Usuários (perm. granular) */}
-                <Route
-                  element={
-                    <PermissionRoute permission={Permissions.USUARIOS_VIEW} />
-                  }
-                >
+                {/* Usuários — apenas quem tem permissão */}
+                <Route element={<PermissionRoute permission={Permissions.USUARIOS_VIEW} />}>
                   <Route path="/master/usuarios" element={<Usuarios />} />
                 </Route>
 
-                {/* Tipos de Atendimento (perm. granular) */}
-                <Route
-                  element={
-                    <PermissionRoute permission={Permissions.TIPOS_ATENDIMENTO_VIEW} />
-                  }
-                >
+                {/* Tipos de Atendimento — apenas master (view) */}
+                <Route element={<PermissionRoute permission={Permissions.TIPOS_ATENDIMENTO_VIEW} />}>
                   <Route path="/master/tipos-atendimento" element={<TiposAtendimento />} />
+                </Route>
+
+                {/* Criar/Editar Tipos de Atendimento — apenas master (manage) */}
+                <Route element={<PermissionRoute permission={Permissions.TIPOS_ATENDIMENTO_MANAGE} />}>
+                  {/* "novo" antes de ":id" para evitar que "novo" seja capturado como id */}
+                  <Route path="/master/tipos-atendimento/novo" element={<TipoAtendimentoForm />} />
+                  <Route path="/master/tipos-atendimento/:id/editar" element={<TipoAtendimentoForm />} />
                 </Route>
 
               </Route>
             </Route>
 
-            {/* 🚨 Fallback */}
+            {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
 
           </Routes>

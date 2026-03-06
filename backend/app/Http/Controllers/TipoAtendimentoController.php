@@ -53,7 +53,7 @@ class TipoAtendimentoController extends Controller
     {
         $this->authorize('view', $tipoAtendimento);
 
-        return response()->json($tipoAtendimento);
+        return new TipoAtendimentoResource($tipoAtendimento);
     }
 
     public function update(Request $request, TipoAtendimento $tipoAtendimento)
@@ -62,17 +62,17 @@ class TipoAtendimentoController extends Controller
 
         $tipoAtendimento->update(
             $request->validate([
-                'nome'             => 'sometimes|required|string|max:255',
-                'slug'             => 'sometimes|required|string|max:255|unique:tipos_atendimento,slug,' . $tipoAtendimento->id,
-                'descricao'        => 'nullable|string',
-                'valor'            => 'sometimes|required|numeric|min:0',
-                'duracao_minutos'  => 'nullable|integer|min:0',
-                'ativo'            => 'boolean',
-                'ordem'            => 'integer|min:0',
+                'nome'            => 'sometimes|required|string|max:255',
+                'slug'            => 'sometimes|required|string|max:255|unique:tipos_atendimento,slug,' . $tipoAtendimento->id,
+                'descricao'       => 'nullable|string',
+                'valor'           => 'sometimes|required|numeric|min:0',
+                'duracao_minutos' => 'nullable|integer|min:0',
+                'ativo'           => 'boolean',
+                'ordem'           => 'integer|min:0',
             ])
         );
 
-        return response()->json($tipoAtendimento);
+        return new TipoAtendimentoResource($tipoAtendimento->fresh());
     }
 
     public function destroy(TipoAtendimento $tipoAtendimento)
@@ -81,7 +81,7 @@ class TipoAtendimentoController extends Controller
 
         $tipoAtendimento->delete();
 
-        return response()->json(['message' => 'Tipo de atendimento deletado com sucesso']);
+        return response()->json(['message' => 'Tipo de atendimento removido com sucesso.']);
     }
 
     public function estrutura(TipoAtendimento $tipo, TipoAtendimentoService $service)
