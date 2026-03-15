@@ -18,21 +18,21 @@ class ClienteController extends Controller
 
     public function index(Request $request)
     {
-        // authorizeResource() já chama viewAny — não chamar authorize() de novo aqui
-
-        $query = Cliente::query()
-            ->ownedBy(auth()->user())
+        $user  = auth()->user();
+        $query = Cliente::withTrashed()  // master vê soft-deleted também
+            ->ownedBy($user)
             ->with('atendente')
             ->with(['atendimentos' => function ($q) {
-                $q->where('user_id', auth()->id())
-                    ->latest('data_atendimento')
-                    ->limit(1);
+                $q->latest('data_atendimento')->limit(1);
             }]);
 
+        // Filtro de status: active=true → apenas ativos, active=false → apenas inativos/deletados
         if ($request->has('active')) {
-            $request->boolean('active')
-                ? $query->whereNull('deleted_at')
-                : $query->onlyTrashed();
+            if ($request->boolean('active')) {
+                $query->whereNull('deleted_at');
+            } else {
+                $query->onlyTrashed();
+            }
         }
 
         if ($search = $request->get('search')) {
@@ -84,7 +84,7 @@ class ClienteController extends Controller
 
         $cliente->restore();
 
-        return new ClienteResource($cliente);
+        return new ClienteResource($cliente->load('atendente:id,name,email'));
     }
 
     public function forceDelete($id)

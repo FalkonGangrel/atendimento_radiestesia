@@ -107,6 +107,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('clientes', ClienteController::class);
     Route::get('/clientes/{cliente}/historico', [ClienteController::class, 'historico']);
 
+    // Restore e force-delete precisam de withTrashed para o binding encontrar soft-deleted
+    Route::post('/clientes/{id}/restore', [ClienteController::class, 'restore'])
+        ->withTrashed();
+    Route::delete('/clientes/{id}/force-delete', [ClienteController::class, 'forceDelete'])
+        ->withTrashed();
+
     // ============================
     // TIPOS DE ATENDIMENTO
     // ============================

@@ -2,42 +2,58 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Permissions } from '@/constants/permissions'
 import { useAuth } from '@/contexts'
-import { useClientesList } from '@/hooks/useClientes'
-import { api } from '@/lib/api'
+import { useClientesList, useDeleteCliente, useRestoreCliente } from '@/hooks/useClientes'
 import { formatDate } from '@/lib/utils'
 import AtendimentoModal from '@/modules/atendimento/components/AtendimentoModal'
-import { Edit, Eye, MessageSquare, Plus, Trash2 } from 'lucide-react'
+import { Edit, MessageSquare, Plus, RotateCcw, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+
+type FilterStatus = 'all' | 'active' | 'inactive'
 
 export default function Clientes() {
   const navigate = useNavigate()
   const { user, hasPermission } = useAuth()
-  const { data: clientes, isLoading, isError, error, refetch } = useClientesList()
-  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [filter, setFilter]                     = useState<FilterStatus>('active')
+  const [actionError, setActionError]           = useState<string | null>(null)
   const [clienteHistoricoId, setClienteHistoricoId] = useState<number | null>(null)
+
+  const { data: clientes, isLoading, isError, error } = useClientesList(filter)
+  const deleteMutation  = useDeleteCliente()
+  const restoreMutation = useRestoreCliente()
 
   const isSuperUser = user?.role === 'master' || user?.role === 'admin'
 
-  // master/admin: pode ver detalhes e editar qualquer cliente
-  // created_by.id é o user_id do dono
-  const canManage = (clienteUserId: number) =>
-    isSuperUser || user?.id === clienteUserId
-
-  // só o dono pode incluir atendimentos
-  const canAddAtendimento = (clienteUserId: number) =>
-    user?.id === clienteUserId
+  const canManage        = (clienteUserId: number) => isSuperUser || user?.id === clienteUserId
+  const canAddAtendimento = (clienteUserId: number) => user?.id === clienteUserId
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Tem certeza que deseja desativar este cliente?')) return
-    setDeleteError(null)
+    if (!confirm('Desativar este cliente?')) return
+    setActionError(null)
     try {
-      await api.delete(`/clientes/${id}`)
-      refetch()
+      await deleteMutation.mutateAsync(id)
     } catch {
-      setDeleteError('Erro ao desativar cliente')
+      setActionError('Erro ao desativar cliente.')
     }
   }
+
+  const handleRestore = async (id: number) => {
+    if (!confirm('Reativar este cliente?')) return
+    setActionError(null)
+    try {
+      await restoreMutation.mutateAsync(id)
+    } catch {
+      setActionError('Erro ao reativar cliente.')
+    }
+  }
+
+  const isPending = deleteMutation.isPending || restoreMutation.isPending
+
+  const filterTabs: { label: string; value: FilterStatus }[] = [
+    { label: 'Todos',    value: 'all'      },
+    { label: 'Ativos',   value: 'active'   },
+    { label: 'Inativos', value: 'inactive' },
+  ]
 
   if (isLoading) {
     return (
@@ -58,82 +74,104 @@ export default function Clientes() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="mb-8 flex justify-between items-center">
+
+        {/* Header */}
+        <div className="mb-6 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Clientes</h1>
-            <p className="text-gray-600 mt-2">Gerencie seus clientes aqui.</p>
+            <p className="text-gray-600 mt-1">Gerencie seus clientes aqui.</p>
           </div>
-          {/* Todo autenticado pode cadastrar clientes */}
           <Button onClick={() => navigate('/clientes/novo')}>
             <Plus className="w-4 h-4 mr-2" />
             Novo Cliente
           </Button>
         </div>
 
-        {deleteError && (
+        {/* Tabs de filtro */}
+        <div className="flex gap-2 mb-6">
+          {filterTabs.map(tab => (
+            <button
+              key={tab.value}
+              onClick={() => setFilter(tab.value)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                filter === tab.value
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {actionError && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-            {deleteError}
+            {actionError}
           </div>
         )}
 
+        {/* Lista */}
         {clientes && clientes.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {clientes.map(cliente => {
-              const isActive = !cliente.deleted_at
-              const owned = canManage(cliente.created_by.id)
-              const canEdit = owned && isActive
-              const canDelete = owned && isActive
+              const isDeleted = !!cliente.deleted_at
+              const owned      = canManage(cliente.created_by.id)
               const canAtendimento = canAddAtendimento(cliente.created_by.id)
 
               return (
                 <Card
                   key={cliente.id}
-                  className={`transition-all ${!isActive ? 'opacity-60 border-dashed border-gray-300' : ''}`}
+                  className={`transition-all ${
+                    isDeleted ? 'opacity-50 border-dashed border-gray-300' : ''
+                  }`}
                 >
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-lg font-semibold flex flex-col">
                       <span className="text-gray-900">{cliente.name}</span>
-                      {!isActive && (
+                      {isDeleted && (
                         <span className="text-xs text-red-500 mt-1">Inativo</span>
                       )}
                     </CardTitle>
 
                     <div className="flex gap-2">
-                      {/* Ver detalhes: master/admin ou dono */}
-                      {owned && (
+                      {owned && !isDeleted && (
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => navigate(`/clientes/${cliente.id}`)}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      )}
-
-                      {/* Editar: dono ou master/admin, apenas ativo */}
-                      {canEdit && (
-                        <Button
-                          size="sm"
-                          variant="outline"
+                          disabled={isPending}
                           onClick={() => navigate(`/clientes/${cliente.id}/editar`)}
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
                       )}
 
-                      {/* Desativar: dono ou master/admin, apenas ativo */}
-                      {canDelete && (
+                      {/* Reativar — apenas inativos */}
+                      {owned && isDeleted && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={isPending}
+                          title="Reativar cliente"
+                          onClick={() => handleRestore(cliente.id)}
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                        </Button>
+                      )}
+
+                      {/* Desativar — apenas ativos */}
+                      {owned && !isDeleted && (
                         <Button
                           size="sm"
                           variant="destructive"
+                          disabled={isPending}
                           onClick={() => handleDelete(cliente.id)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       )}
 
-                      {/* Atendimento: apenas o dono */}
-                      {canAtendimento && (
+                      {/* Atendimento — apenas dono e ativo */}
+                      {canAtendimento && !isDeleted && (
                         <Button
                           size="sm"
                           variant="secondary"
@@ -172,7 +210,6 @@ export default function Clientes() {
                       </div>
                     )}
 
-                    {/* Cadastrado por: apenas master/admin */}
                     {hasPermission(Permissions.CLIENTES_VIEW_OWNER) && cliente.created_by && (
                       <div className="pt-2 mt-2 border-t">
                         <p className="text-xs text-gray-500">Cadastrado por:</p>
@@ -190,11 +227,17 @@ export default function Clientes() {
         ) : (
           <Card>
             <CardContent className="text-center py-12">
-              <p className="text-gray-500 mb-4">Nenhum cliente cadastrado ainda.</p>
-              <Button onClick={() => navigate('/clientes/novo')}>
-                <Plus className="w-4 h-4 mr-2" />
-                Cadastrar Primeiro Cliente
-              </Button>
+              <p className="text-gray-500 mb-4">
+                {filter === 'inactive'
+                  ? 'Nenhum cliente inativo.'
+                  : 'Nenhum cliente cadastrado ainda.'}
+              </p>
+              {filter !== 'inactive' && (
+                <Button onClick={() => navigate('/clientes/novo')}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Cadastrar Primeiro Cliente
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
