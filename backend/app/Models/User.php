@@ -56,7 +56,7 @@ class User extends Authenticatable
 
     public function atendimentos(): HasMany
     {
-        return $this->hasMany(TemplateAtendimento::class, 'user_id');
+        return $this->hasMany(Atendimento::class, 'user_id');
     }
 
     /* -----------------------------------------------------------------

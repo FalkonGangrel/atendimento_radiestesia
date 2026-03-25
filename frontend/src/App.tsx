@@ -21,6 +21,8 @@ import ClienteForm from '@/pages/ClienteForm'
 import Usuarios from '@/pages/Usuarios'
 import TiposAtendimento from '@/pages/TiposAtendimento'
 import TipoAtendimentoForm from '@/pages/TipoAtendimentoForm'
+import DashboardMaster from '@/pages/DashboardMaster'
+import UsuarioPermissoes from '@/pages/UsuarioPermissoes'
 
 export default function App() {
   return (
@@ -45,6 +47,16 @@ export default function App() {
                 <Route path="/clientes/novo" element={<ClienteForm />} />
                 <Route path="/clientes/:id" element={<ClienteDetail />} />
                 <Route path="/clientes/:id/editar" element={<ClienteForm />} />
+
+                {/* Dashboard master */}
+                <Route element={<PermissionRoute permission={Permissions.DASHBOARD_MASTER} />}>
+                  <Route path="/master/dashboard" element={<DashboardMaster />} />
+                </Route>
+
+                {/* Permissões de usuário — apenas master */}
+                <Route element={<PermissionRoute permission={Permissions.TIPOS_ATENDIMENTO_VIEW} />}>
+                  <Route path="/master/permissoes/:userId" element={<UsuarioPermissoes />} />
+                </Route>
 
                 {/* Usuários — apenas quem tem permissão */}
                 <Route element={<PermissionRoute permission={Permissions.USUARIOS_VIEW} />}>

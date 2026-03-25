@@ -1,90 +1,230 @@
+// src/pages/DashboardMaster.tsx
 import { useQuery } from '@tanstack/react-query'
-import { AxiosError } from 'axios'
-import { Link } from 'react-router-dom'
 import { api } from '@/lib/api'
+import { formatCurrency } from '@/lib/utils'
+import {
+  Users, Calendar, DollarSign, RotateCcw,
+  TrendingUp, UserCheck, UserX,
+} from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-type MasterStats = {
-  total_users: number
-  total_atendimentos: number
-  total_lists: number
-  total_list_items: number
+interface AtendenteStat {
+  id: number
+  name: string
+  atendimentos_mes: number
+  atendimentos_total: number
+  total_clientes: number
 }
 
-export default function DashboardMaster() {
-  const {
-    data: stats,
-    isLoading,
-    error,
-  } = useQuery<MasterStats, AxiosError>({
+interface TipoStat {
+  id: number
+  nome: string
+  atendimentos_mes: number
+}
+
+interface MasterStats {
+  usuarios_por_role: Record<string, number>
+  total_usuarios: number
+  atendimentos_mes: number
+  saldo_mes: number
+  retornos_pendentes: number
+  atendimentos_por_atendente: AtendenteStat[]
+  atendimentos_por_tipo: TipoStat[]
+  extras: Record<string, unknown>
+}
+
+function useMasterStats() {
+  return useQuery<MasterStats>({
     queryKey: ['master-stats'],
-    queryFn: async (): Promise<MasterStats> => {
+    queryFn: async () => {
       const { data } = await api.get('/master/stats')
       return data
     },
-    staleTime: 5 * 60 * 1000,
   })
+}
+
+export default function DashboardMaster() {
+  const { data, isLoading, isError } = useMasterStats()
+
+  const mesAtual = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
 
   if (isLoading) {
     return (
-      <div className="text-center py-10 text-gray-500">
-        Carregando estatísticas master...
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-500">Carregando...</div>
       </div>
     )
   }
 
-  if (error) {
+  if (isError || !data) {
     return (
-      <div className="text-center py-10 text-red-500">
-        Erro ao carregar o dashboard master
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-red-500">Erro ao carregar o dashboard master.</div>
       </div>
     )
   }
+
+  const summaryCards = [
+    {
+      label: 'Total de usuários',
+      value: data.total_usuarios,
+      icon: <Users className="w-5 h-5 text-indigo-500" />,
+      color: 'bg-indigo-50',
+      sub: Object.entries(data.usuarios_por_role)
+        .map(([role, total]) => `${total} ${role}`)
+        .join(' · '),
+    },
+    {
+      label: 'Atendimentos no mês',
+      value: data.atendimentos_mes,
+      icon: <Calendar className="w-5 h-5 text-blue-500" />,
+      color: 'bg-blue-50',
+      sub: null,
+    },
+    {
+      label: 'Saldo do mês',
+      value: formatCurrency(data.saldo_mes),
+      icon: <DollarSign className="w-5 h-5 text-green-500" />,
+      color: 'bg-green-50',
+      sub: null,
+    },
+    {
+      label: 'Retornos pendentes',
+      value: data.retornos_pendentes,
+      icon: <RotateCcw className="w-5 h-5 text-orange-500" />,
+      color: 'bg-orange-50',
+      sub: null,
+    },
+  ]
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Dashboard Master</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded shadow p-6">
-          <p className="text-sm text-gray-500">Usuários</p>
-          <p className="text-2xl font-semibold">{stats?.total_users}</p>
-        </div>
-
-        <div className="bg-white rounded shadow p-6">
-          <p className="text-sm text-gray-500">Atendimentos</p>
-          <p className="text-2xl font-semibold">
-            {stats?.total_atendimentos}
-          </p>
-        </div>
-
-        <div className="bg-white rounded shadow p-6">
-          <p className="text-sm text-gray-500">Listas</p>
-          <p className="text-2xl font-semibold">{stats?.total_lists}</p>
-        </div>
-
-        <div className="bg-white rounded shadow p-6">
-          <p className="text-sm text-gray-500">Itens de Lista</p>
-          <p className="text-2xl font-semibold">
-            {stats?.total_list_items}
-          </p>
-        </div>
+    <div className="p-6 max-w-7xl mx-auto space-y-8">
+      {/* Cabeçalho */}
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Dashboard Master</h1>
+        <p className="text-gray-500 mt-1 capitalize">{mesAtual}</p>
       </div>
 
-      <div className="flex gap-4">
-        <Link
-          to="/usuarios"
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Gerenciar Usuários
-        </Link>
-
-        <Link
-          to="/listas"
-          className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-        >
-          Gerenciar Listas
-        </Link>
+      {/* Cards de resumo */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {summaryCards.map(card => (
+          <Card key={card.label} className={`${card.color} border-0`}>
+            <CardContent className="pt-6 pb-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-medium text-gray-600">{card.label}</span>
+                {card.icon}
+              </div>
+              <p className="text-2xl font-bold text-gray-900">{card.value}</p>
+              {card.sub && (
+                <p className="text-xs text-gray-500 mt-1">{card.sub}</p>
+              )}
+            </CardContent>
+          </Card>
+        ))}
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Atendimentos por atendente */}
+        <Card>
+          <CardHeader className="flex flex-row items-center gap-2 pb-3">
+            <UserCheck className="w-5 h-5 text-indigo-500" />
+            <CardTitle className="text-lg">Atendimentos por Atendente</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {data.atendimentos_por_atendente.length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-6">Nenhum atendente cadastrado.</p>
+            ) : (
+              <div className="space-y-3">
+                {data.atendimentos_por_atendente
+                  .sort((a, b) => b.atendimentos_mes - a.atendimentos_mes)
+                  .map(atendente => {
+                    const max = Math.max(...data.atendimentos_por_atendente.map(a => a.atendimentos_mes), 1)
+                    const pct = Math.round((atendente.atendimentos_mes / max) * 100)
+
+                    return (
+                      <div key={atendente.id}>
+                        <div className="flex justify-between items-center mb-1">
+                          <div>
+                            <span className="text-sm font-medium text-gray-800">{atendente.name}</span>
+                            <span className="text-xs text-gray-400 ml-2">
+                              {atendente.total_clientes} cliente{atendente.total_clientes !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-sm font-bold text-indigo-600">{atendente.atendimentos_mes}</span>
+                            <span className="text-xs text-gray-400 ml-1">/ mês</span>
+                          </div>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-1.5">
+                          <div
+                            className="bg-indigo-500 h-1.5 rounded-full transition-all"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Atendimentos por tipo */}
+        <Card>
+          <CardHeader className="flex flex-row items-center gap-2 pb-3">
+            <TrendingUp className="w-5 h-5 text-purple-500" />
+            <CardTitle className="text-lg">Atendimentos por Tipo</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {data.atendimentos_por_tipo.length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-6">Nenhum atendimento no mês.</p>
+            ) : (
+              <div className="space-y-3">
+                {data.atendimentos_por_tipo
+                  .filter(t => t.atendimentos_mes > 0)
+                  .sort((a, b) => b.atendimentos_mes - a.atendimentos_mes)
+                  .map(tipo => {
+                    const max = Math.max(...data.atendimentos_por_tipo.map(t => t.atendimentos_mes), 1)
+                    const pct = Math.round((tipo.atendimentos_mes / max) * 100)
+
+                    return (
+                      <div key={tipo.id}>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-sm font-medium text-gray-800">{tipo.nome}</span>
+                          <span className="text-sm font-bold text-purple-600">{tipo.atendimentos_mes}</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-1.5">
+                          <div
+                            className="bg-purple-500 h-1.5 rounded-full transition-all"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Usuários por role — breakdown visual */}
+      <Card>
+        <CardHeader className="flex flex-row items-center gap-2 pb-3">
+          <UserX className="w-5 h-5 text-gray-500" />
+          <CardTitle className="text-lg">Composição de Usuários</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-6 flex-wrap">
+            {Object.entries(data.usuarios_por_role).map(([role, total]) => (
+              <div key={role} className="text-center">
+                <p className="text-3xl font-bold text-gray-900">{total}</p>
+                <p className="text-sm text-gray-500 capitalize mt-1">{role}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
